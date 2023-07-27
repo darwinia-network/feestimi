@@ -1,0 +1,27 @@
+{
+  "name": "darwinia-msgport-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start:dev": "npx nodemon",
+    "build": "rimraf ./build && tsc",
+    "start": "npm run build && node build/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@layerzerolabs/lz-sdk": "^0.0.33",
+    "@types/node": "^20.4.5",
+    "nodemon": "^3.0.1",
+    "rimraf": "^5.0.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  },
+  "dependencies": {
+    "@axelar-network/axelarjs-sdk": "^0.13.5",
+    "ethers": "^5.7.0"
+  }
+}
