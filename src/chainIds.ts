@@ -1,5 +1,5 @@
 // https://chainid.network/chains_mini.json
-const chainIds = {
+const chainIds: { [key: string]: number } = {
   // shortName: chainId
   'eth': 1,
   'rop': 3,

@@ -1,14 +1,11 @@
 type IEstimateFee = (
   fromChain: number,
   toChain: number,
-  payload: Payload,
+  gasLimit: number,
+  /* payload is often used by messaging layers to calc relayer fee */
+  payload?: string,
   fromDappAddress?: string,
-  toDappAddress?: string,
-) => Promise<string>;
+  toDappAddress?: string
+) => Promise<{ [key: string]: string }>;
 
-type Payload = {
-  content?: string;
-  gasLimit?: number;
-}
-
-export { IEstimateFee, Payload };
+export { IEstimateFee };
