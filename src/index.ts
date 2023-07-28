@@ -39,7 +39,7 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   const gasLimit = req.query.gas_limit as string
   console.log(`fromChain: ${fromChainId}, toChain: ${toChainId}, gasLimit: ${gasLimit})`)
   if (!fromChainId || !toChainId || !gasLimit) {
-    error(res, 400, `from_chain_id, to_chain_id and gas_limit are required`)
+    errorWith(res, 101, `from_chain_id, to_chain_id and gas_limit are required`)
     return;
   }
 
@@ -49,7 +49,7 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   console.log(`payload: ${payload}, fromAddress: ${fromAddress}, toAddress: ${toAddress})`)
   if (platform == 'layerzero') {
     if (!payload) {
-      error(res, 400, `payload is required for layerzero`)
+      errorWith(res, 101, `payload is required for layerzero`)
       return;
     }
   }
@@ -80,7 +80,7 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
       ok(res, result)
     })
   } else {
-    error(res, 400, 'Unsupported platform')
+    errorWith(res, 100, 'Unsupported platform')
   }
   // const promises = []
   // promises.push(
@@ -106,10 +106,10 @@ function ok(res: Response, result: any) {
   })
 }
 
-function error(res: Response, status: number, message: string) {
-  res.status(status).send(
+function errorWith(res: Response, code: number, message: string) {
+  res.status(400).send(
     {
-      code: 1,
+      code: code,
       message: message
     }
   )

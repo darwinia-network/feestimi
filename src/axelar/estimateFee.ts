@@ -2,16 +2,8 @@ import { IEstimateFee } from "../interfaces/IEstimateFee";
 import {
   Environment,
   AxelarQueryAPI,
-  EvmChain,
-  GasToken,
 } from "@axelar-network/axelarjs-sdk";
-import chainIdMapping from "./chainIdMapping";
-
-const axelarNativeTokens: { [chainName: string]: string } = {};
-axelarNativeTokens['ethereum-2'] = GasToken.ETH;
-axelarNativeTokens['binance'] = GasToken.BINANCE;
-axelarNativeTokens['Fantom'] = GasToken.FTM;
-axelarNativeTokens['Moonbeam'] = GasToken.GLMR;
+import chainInfo from "./chainInfo";
 
 const buildEstimateFee = (environment: Environment): IEstimateFee => {
   const sdk = new AxelarQueryAPI({
@@ -23,11 +15,13 @@ const buildEstimateFee = (environment: Environment): IEstimateFee => {
     toChain,
     gasLimit
   ): Promise<{ [key: string]: string }> => {
-    const axFromChainId = chainIdMapping(fromChain) as string;
-    const axToChainId = chainIdMapping(toChain) as string;
+    const fromChainInfo = chainInfo[fromChain];
+    const toChainInfo = chainInfo[toChain];
+    const axFromChainId = fromChainInfo[0];
+    const axToChainId = toChainInfo[0];
     console.log(`Axelar estimate fee fromChain: ${axFromChainId}, toChain: ${axToChainId}`);
 
-    const axSrcGasToken = axelarNativeTokens[axFromChainId];
+    const axSrcGasToken = fromChainInfo[1];
     console.log(`Axelar estimate fee SrcGasToken: ${axSrcGasToken}`)
 
     return {
