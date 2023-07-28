@@ -6,7 +6,8 @@ import axelarBuildEstimateFee from "./axelar/estimateFee";
 
 import { Environment } from "@axelar-network/axelarjs-sdk";
 
-const axEstimateFee = axelarBuildEstimateFee(Environment.TESTNET);
+const axEstimateFee = axelarBuildEstimateFee(Environment.MAINNET);
+const axEstimateFeeTestnet = axelarBuildEstimateFee(Environment.TESTNET);
 const lzEstimateFee = layerzeroBuildEstimateFee()
 
 const app: Express = express();
@@ -61,27 +62,8 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   const toChainIdInt = parseInt(toChainId)
   const gasLimitInt = parseInt(gasLimit)
 
-  if (platform == 'layerzero') {
-    lzEstimateFee(
-      fromChainIdInt,
-      toChainIdInt,
-      gasLimitInt,
-      payload,
-      fromAddress
-    ).then((result) => {
-      ok(res, result)
-    })
-  } else if (platform == 'axelar') {
-    axEstimateFee(
-      fromChainIdInt,
-      toChainIdInt,
-      gasLimitInt
-    ).then((result) => {
-      ok(res, result)
-    })
-  } else {
-    errorWith(res, 100, 'Unsupported platform')
-  }
+  estimateFee(res, platform, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress)
+
   // const promises = []
   // promises.push(
   // )
@@ -98,6 +80,54 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   //   res.send(result)
   // });
 });
+
+function estimateFee(res: Response, platform: string, fromChainIdInt: number, toChainIdInt: number, gasLimitInt: number, payload: string, fromAddress: string) {
+  if (platform == 'layerzero') {
+    lzEstimateFee(
+      fromChainIdInt,
+      toChainIdInt,
+      gasLimitInt,
+      payload,
+      fromAddress
+    ).then((result) => {
+      ok(res, result)
+    }).catch((e) => {
+      if (e.message && e.message.includes('chain not found')) {
+        errorWith(res, 102, `The fee estimation for messages between ${fromChainIdInt} and ${toChainIdInt} is not supported.`)
+      } else {
+        console.log('-----------------------')
+        console.log(e)
+      }
+    })
+  } else if (platform == 'axelar') {
+    axEstimateFee(
+      fromChainIdInt,
+      toChainIdInt,
+      gasLimitInt
+    ).then((result) => {
+      ok(res, result)
+    }).catch((e) => {
+      if (e.message.includes('chain not found')) {
+        errorWith(res, 102, `The fee estimation for messages between ${fromChainIdInt} and ${toChainIdInt} is not supported.`)
+      }
+    })
+
+  } else if (platform == 'axelar-testnet') {
+    axEstimateFeeTestnet(
+      fromChainIdInt,
+      toChainIdInt,
+      gasLimitInt
+    ).then((result) => {
+      ok(res, result)
+    }).catch((e) => {
+      if (e.message.includes('chain not found')) {
+        errorWith(res, 102, `The fee estimation for messages between ${fromChainIdInt} and ${toChainIdInt} is not supported.`)
+      }
+    })
+  } else {
+    errorWith(res, 100, 'Unsupported platform')
+  }
+}
 
 function ok(res: Response, result: any) {
   res.send({

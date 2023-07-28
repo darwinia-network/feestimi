@@ -12,8 +12,11 @@ function getLzChainEnumKey(chainId: number) {
     }
   })
 
-  if (result.length != 1) {
-    throw `Cannot find corrent chain key ${result} for chain id: ${chainId}`
+  if (result.length == 0) {
+    throw `Cannot find correct chain key for chain id: ${chainId}`
+  }
+  if (result.length > 1) {
+    throw `Cannot find correct chain key ${result} for chain id: ${chainId}`
   }
 
   return result[0]

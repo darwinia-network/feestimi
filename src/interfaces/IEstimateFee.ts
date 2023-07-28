@@ -8,4 +8,8 @@ type IEstimateFee = (
   toDappAddress?: string
 ) => Promise<{ [key: string]: string }>;
 
-export { IEstimateFee };
+// define an Error type
+
+type ChainNotSupportedError = Error;
+
+export { IEstimateFee, ChainNotSupportedError };
