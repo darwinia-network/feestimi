@@ -95,8 +95,7 @@ function estimateFee(res: Response, platform: string, fromChainIdInt: number, to
       if (e.message && e.message.includes('chain not found')) {
         errorWith(res, 102, `The fee estimation for messages between ${fromChainIdInt} and ${toChainIdInt} is not supported.`)
       } else {
-        console.log('-----------------------')
-        console.log(e)
+        unknownError(res, e.toString())
       }
     })
   } else if (platform == 'axelar') {
@@ -107,8 +106,10 @@ function estimateFee(res: Response, platform: string, fromChainIdInt: number, to
     ).then((result) => {
       ok(res, result)
     }).catch((e) => {
-      if (e.message.includes('chain not found')) {
+      if (e.message && e.message.includes('chain not found')) {
         errorWith(res, 102, `The fee estimation for messages between ${fromChainIdInt} and ${toChainIdInt} is not supported.`)
+      } else {
+        unknownError(res, e.toString())
       }
     })
 
@@ -120,8 +121,10 @@ function estimateFee(res: Response, platform: string, fromChainIdInt: number, to
     ).then((result) => {
       ok(res, result)
     }).catch((e) => {
-      if (e.message.includes('chain not found')) {
+      if (e.message && e.message.includes('chain not found')) {
         errorWith(res, 102, `The fee estimation for messages between ${fromChainIdInt} and ${toChainIdInt} is not supported.`)
+      } else {
+        unknownError(res, e.toString())
       }
     })
   } else {
@@ -143,6 +146,10 @@ function errorWith(res: Response, code: number, message: string) {
       message: message
     }
   )
+}
+
+function unknownError(res: Response, message: string) {
+  errorWith(res, 999, message)
 }
 
 app.listen(port, () => {
