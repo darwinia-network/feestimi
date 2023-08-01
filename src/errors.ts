@@ -72,12 +72,33 @@ class ChainNotFoundInMiniError extends FeeBaseError {
   }
 }
 
+class LayerzeroError extends FeeBaseError {
+  readonly _tag = "LayerzeroError"
+
+  constructor(_message: string) {
+    super(1000, _message)
+  }
+}
+
+class AxelarError extends FeeBaseError {
+  readonly _tag = "AxelarError"
+
+  constructor(_message: string) {
+    super(2000, _message)
+  }
+}
+
 
 class UnknownError extends FeeBaseError {
-  readonly _tag = "UnknowError"
+  readonly _tag = "UnknownError"
 
   constructor(_code: number, _message: string) {
     super(_code, _message)
   }
 }
-export { FeeBaseError, ChainNotFoundError, RouteNotFoundError, ChainInfoMissingError, ChainNotFoundInMiniError, MultiChainIdFound, UnknownError }
+export {
+  FeeBaseError,
+  ChainNotFoundError, RouteNotFoundError, ChainInfoMissingError, ChainNotFoundInMiniError, MultiChainIdFound,
+  UnknownError,
+  LayerzeroError, AxelarError
+}

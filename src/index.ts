@@ -1,13 +1,20 @@
 // https://khalilstemmler.com/blogs/typescript/node-starter-project/
 import express, { Express, Request, Response } from 'express';
 import chainIds from './chainIds';
-import layerzeroBuildEstimateFee from "./layerzero/estimateFee";
 import { Effect, pipe } from "effect";
 import { validateHeaderName } from 'http';
 import { FeeBaseError } from './errors';
 import { IEstimateFee } from './interfaces/IEstimateFee';
 
+// layerzero
+import layerzeroBuildEstimateFee from "./layerzero/estimateFee";
 const lzEstimateFee = layerzeroBuildEstimateFee()
+
+// axelar
+import axelarBuildEstimateFee from "./axelar/estimateFee";
+import { Environment } from "@axelar-network/axelarjs-sdk";
+const axEstimateFee = axelarBuildEstimateFee(Environment.MAINNET);
+const axEstimateFeeTestnet = axelarBuildEstimateFee(Environment.TESTNET);
 
 const app: Express = express();
 const port = 3001;
@@ -61,17 +68,16 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   const toChainIdInt = parseInt(toChainId)
   const gasLimitInt = parseInt(gasLimit)
 
-  estimateFee(res, platform, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress)
-});
-
-
-function estimateFee(res: Response, platform: string, fromChainIdInt: number, toChainIdInt: number, gasLimitInt: number, payload: string, fromAddress: string) {
   if (platform == 'layerzero') {
     run(res, lzEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress)
+  } else if (platform == 'axelar') {
+    run(res, axEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt)
+  } else if (platform == 'axelar-testnet') {
+    run(res, axEstimateFeeTestnet, fromChainIdInt, toChainIdInt, gasLimitInt)
   } else {
     errorWith(res, 100, 'Unsupported platform')
   }
-}
+});
 
 function run(
   res: Response,

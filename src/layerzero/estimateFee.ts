@@ -1,6 +1,6 @@
 import { Contract, ethers } from "ethers";
 import getLzChainInfo from "./lzChainInfo";
-import { ChainInfoMissingError, ChainNotFoundError, UnknownError, ChainNotFoundInMiniError, FeeBaseError } from "../errors";
+import { ChainInfoMissingError, ChainNotFoundError, UnknownError, ChainNotFoundInMiniError, FeeBaseError, LayerzeroError } from "../errors";
 import { Effect, pipe } from "effect";
 import chainMapping from "../chainsMini";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
@@ -68,7 +68,7 @@ const buildEstimateFee = () => {
             false,
             adapterParamsV1(gasLimit)
           ),
-          catch: (error) => new UnknownError(888, `${error}`)
+          catch: (error) => new LayerzeroError(`${error}`)
         })
       }
 
