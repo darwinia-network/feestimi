@@ -1,25 +1,19 @@
-import { IEstimateFee } from "../interfaces/IEstimateFee";
-import { ethers } from "ethers";
+import { Contract, ethers } from "ethers";
 import getLzChainInfo from "./lzChainInfo";
-import * as chains from "../chains_mini.json";
+import { ChainInfoMissingError, ChainNotFoundError, UnknownError, ChainNotFoundInMiniError, FeeBaseError } from "../errors";
+import { Effect, pipe } from "effect";
+import chainMapping from "../chainsMini";
+import { IEstimateFee } from "../interfaces/IEstimateFee";
 
-const chainMapping: { [key: number]: object } = {}
-Object.keys(chains).forEach((key) => {
-  const chain = chains[parseInt(key)]
-  if (chain) {
-    chainMapping[chain.chainId] = chain
-  }
-})
-
-const buildEstimateFee = (): IEstimateFee => {
-  const getProvider = (chainId: number): null | ethers.providers.Provider => {
+const buildEstimateFee = () => {
+  const getProvider = (chainId: number): Effect.Effect<never, ChainNotFoundInMiniError, ethers.providers.Provider> => {
     const url = getProviderUrl(chainId);
-    console.log(`provider url: ${url}`)
+
     if (!url) {
-      return null;
+      return Effect.fail(new ChainNotFoundInMiniError(chainId))
     }
     const provider = new ethers.providers.JsonRpcProvider(url);
-    return provider;
+    return Effect.succeed(provider);
   }
 
   // TODO: cache
@@ -33,9 +27,9 @@ const buildEstimateFee = (): IEstimateFee => {
     );
   }
 
-  const estimateFee: IEstimateFee = async (
-    fromChain: number,
-    toChain: number,
+  const estimateFee: IEstimateFee = (
+    fromChain,
+    toChain,
     gasLimit,
 
     // Q: Why Layerzero estimateFee needs fromDappAddress and payload?
@@ -43,45 +37,59 @@ const buildEstimateFee = (): IEstimateFee => {
     //    getUAConfig(fromDappAddress).relayer.getRelayerFee(payload)
     payload,
     fromDappAddress
-  ): Promise<{ [key: string]: string }> => {
-    const [, lzFromChainId, lzFromEndpointAddress] = getLzChainInfo(fromChain);
-    const [, lzToChainId,] = getLzChainInfo(toChain);
+  ) => {
 
-    if (!lzFromChainId) {
-      throw new Error(`chain not found. chainId: ${fromChain}`);
+    try {
+      const [, lzFromChainId, lzFromEndpointAddress] = getLzChainInfo(fromChain);
+      if (!lzFromChainId) {
+        return Effect.fail(new ChainNotFoundError(fromChain, "layerzero", "from"))
+      }
+      if (!lzFromEndpointAddress) {
+        return Effect.fail(new ChainInfoMissingError(fromChain, 'lzFromEndpointAddress'))
+      }
+
+      const [, lzToChainId,] = getLzChainInfo(toChain);
+      if (!lzToChainId) {
+        return Effect.fail(new ChainNotFoundError(toChain, "layerzero", "to"))
+      }
+
+      console.log(`Layerzero estimate fee fromChain: ${lzFromChainId}, toChain: ${lzToChainId}`);
+      console.log(`Layerzero estimate fee fromEndpointAddress: ${lzFromEndpointAddress}`)
+
+      const fromAddress = fromDappAddress == undefined ? ethers.constants.AddressZero : fromDappAddress
+      console.log(`lzToChainId: ${fromAddress}`)
+
+      const lzEstimateFee = (lzEndpoint: Contract) => {
+        return Effect.tryPromise({
+          try: () => lzEndpoint.estimateFees(
+            lzToChainId,
+            fromAddress,
+            payload,
+            false,
+            adapterParamsV1(gasLimit)
+          ),
+          catch: (error) => new UnknownError(888, `${error}`)
+        })
+      }
+
+      return pipe(
+        getProvider(fromChain),
+        Effect.map((provider) => getLzEndpoint(provider, lzFromEndpointAddress)),
+        Effect.flatMap((lzEndpoint) => lzEstimateFee(lzEndpoint)),
+        Effect.map((result: any) => result.nativeFee.toString())
+      )
+    } catch (error: any) {
+      if (error.code) {
+        return Effect.fail(error)
+      } else {
+        return Effect.fail(new UnknownError(999, `${error}`))
+      }
     }
-    if (!lzFromEndpointAddress) {
-      throw new Error(`chain not found. chainId: ${fromChain}, endpointAddress: ${lzFromEndpointAddress}`)
-    }
-    if (!lzToChainId) {
-      throw new Error(`chain not found.chainId: ${toChain}`);
-    }
-
-    console.log(`Layerzero estimate fee fromChain: ${lzFromChainId}, toChain: ${lzToChainId}`);
-    console.log(`Layerzero estimate fee fromEndpointAddress: ${lzFromEndpointAddress}`)
-
-
-    const provider = getProvider(fromChain);
-    if (!provider) {
-      throw new Error(`chain not found. chainId: ${fromChain}`)
-    }
-    const lzEndpoint = getLzEndpoint(provider, lzFromEndpointAddress);
-
-    const fromAddress = fromDappAddress == undefined ? ethers.constants.AddressZero : fromDappAddress
-    console.log(`lzToChainId: ${fromAddress}`)
-
-    const result = await lzEndpoint.estimateFees(
-      lzToChainId,
-      fromAddress,
-      payload,
-      false,
-      adapterParamsV1(gasLimit)
-    );
-    return { fee: result.nativeFee.toString() };
   }
 
   return estimateFee;
 }
+
 
 function adapterParamsV1(gasLimit: number) {
   return ethers.utils.solidityPack(
@@ -97,7 +105,6 @@ function getProviderUrl(chainId: number) {
   }
 
   const rpcList: string[] = chain.rpc
-  console.log(rpcList)
   return rpcList.find((rpc) => !rpc.includes("$"))
 }
 

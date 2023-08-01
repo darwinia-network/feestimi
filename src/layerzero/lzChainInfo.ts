@@ -1,3 +1,5 @@
+import { ChainNotFoundError, MultiChainIdFound } from "../errors";
+
 const { ChainId, ChainListId, LZ_ADDRESS, ChainKey } = require("@layerzerolabs/lz-sdk");
 
 function getLzChainEnumKey(chainId: number) {
@@ -13,10 +15,10 @@ function getLzChainEnumKey(chainId: number) {
   })
 
   if (result.length == 0) {
-    throw `Cannot find correct chain key for chain id: ${chainId}`
+    throw new ChainNotFoundError(chainId, "layerzero")
   }
   if (result.length > 1) {
-    throw `Cannot find correct chain key ${result} for chain id: ${chainId}`
+    throw new MultiChainIdFound(chainId, 'layerzero')
   }
 
   return result[0]

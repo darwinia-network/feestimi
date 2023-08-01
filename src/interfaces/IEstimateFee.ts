@@ -1,3 +1,6 @@
+import { Effect } from "effect";
+import { FeeBaseError } from "../errors";
+
 type IEstimateFee = (
   fromChain: number,
   toChain: number,
@@ -6,10 +9,6 @@ type IEstimateFee = (
   payload?: string,
   fromDappAddress?: string,
   toDappAddress?: string
-) => Promise<{ [key: string]: string }>;
+) => Effect.Effect<never, FeeBaseError, string>;
 
-// define an Error type
-
-type ChainNotSupportedError = Error;
-
-export { IEstimateFee, ChainNotSupportedError };
+export { IEstimateFee };

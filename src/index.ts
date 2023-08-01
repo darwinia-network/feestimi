@@ -2,12 +2,11 @@
 import express, { Express, Request, Response } from 'express';
 import chainIds from './chainIds';
 import layerzeroBuildEstimateFee from "./layerzero/estimateFee";
-import axelarBuildEstimateFee from "./axelar/estimateFee";
+import { Effect, pipe } from "effect";
+import { validateHeaderName } from 'http';
+import { FeeBaseError } from './errors';
+import { IEstimateFee } from './interfaces/IEstimateFee';
 
-import { Environment } from "@axelar-network/axelarjs-sdk";
-
-const axEstimateFee = axelarBuildEstimateFee(Environment.MAINNET);
-const axEstimateFeeTestnet = axelarBuildEstimateFee(Environment.TESTNET);
 const lzEstimateFee = layerzeroBuildEstimateFee()
 
 const app: Express = express();
@@ -63,73 +62,38 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   const gasLimitInt = parseInt(gasLimit)
 
   estimateFee(res, platform, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress)
-
-  // const promises = []
-  // promises.push(
-  // )
-  // Promise.all(promises).then((values) => {
-  //   const result = values.reduce(
-  //     (acc, v) => {
-  //       return {
-  //         ...acc,
-  //         ...v
-  //       }
-  //     },
-  //     {}
-  //   )
-  //   res.send(result)
-  // });
 });
+
 
 function estimateFee(res: Response, platform: string, fromChainIdInt: number, toChainIdInt: number, gasLimitInt: number, payload: string, fromAddress: string) {
   if (platform == 'layerzero') {
-    lzEstimateFee(
-      fromChainIdInt,
-      toChainIdInt,
-      gasLimitInt,
-      payload,
-      fromAddress
-    ).then((result) => {
-      ok(res, result)
-    }).catch((e) => {
-      if (e.message && e.message.includes('chain not found')) {
-        errorWith(res, 102, `The fee estimation for messages between ${fromChainIdInt} and ${toChainIdInt} is not supported.`)
-      } else {
-        unknownError(res, e.toString())
-      }
-    })
-  } else if (platform == 'axelar') {
-    axEstimateFee(
-      fromChainIdInt,
-      toChainIdInt,
-      gasLimitInt
-    ).then((result) => {
-      ok(res, result)
-    }).catch((e) => {
-      if (e.message && e.message.includes('chain not found')) {
-        errorWith(res, 102, `The fee estimation for messages between ${fromChainIdInt} and ${toChainIdInt} is not supported.`)
-      } else {
-        unknownError(res, e.toString())
-      }
-    })
-
-  } else if (platform == 'axelar-testnet') {
-    axEstimateFeeTestnet(
-      fromChainIdInt,
-      toChainIdInt,
-      gasLimitInt
-    ).then((result) => {
-      ok(res, result)
-    }).catch((e) => {
-      if (e.message && e.message.includes('chain not found')) {
-        errorWith(res, 102, `The fee estimation for messages between ${fromChainIdInt} and ${toChainIdInt} is not supported.`)
-      } else {
-        unknownError(res, e.toString())
-      }
-    })
+    run(res, lzEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress)
   } else {
     errorWith(res, 100, 'Unsupported platform')
   }
+}
+
+function run(
+  res: Response,
+  program: IEstimateFee,
+  fromChainId: number,
+  toChainId: number,
+  gasLimit: number,
+  payload?: string,
+  fromDappAddress?: string,
+  toDappAddress?: string
+) {
+  Effect.runPromise(
+    pipe(
+      program(fromChainId, toChainId, gasLimit, payload, fromDappAddress, toDappAddress),
+      Effect.match({
+        onFailure: (error) => {
+          errorWith(res, error.code, error.message as string)
+        },
+        onSuccess: (result) => ok(res, result)
+      }),
+    )
+  )
 }
 
 function ok(res: Response, result: any) {
@@ -146,10 +110,6 @@ function errorWith(res: Response, code: number, message: string) {
       message: message
     }
   )
-}
-
-function unknownError(res: Response, message: string) {
-  errorWith(res, 999, message)
 }
 
 app.listen(port, () => {
