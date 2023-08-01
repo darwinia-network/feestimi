@@ -15,6 +15,17 @@ curl 'http://localhost:3001/axelar/estimate_fee?from_chain_id=97&to_chain_id=128
 curl 'http://localhost:3001/axelar-testnet/estimate_fee?from_chain_id=97&to_chain_id=1287&gas_limit=300000'
 ```
 
+## RESULT
+
+```json
+{
+  "code": 0,
+  "data": "1239546427527472"
+}
+```
+Native gas tokens in wei
+
+
 ## ERRORs
 
 ```json
