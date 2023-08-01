@@ -1,6 +1,6 @@
 import * as chains from "./chains_mini.json";
-import axios from 'axios';
 import 'dotenv/config'
+import { getChainId } from "./jsonRpcUtils";
 
 const chainMapping: { [key: number]: object } = {}
 
@@ -60,52 +60,6 @@ async function isAliveAndCorrect(rpcUrl: string, chainId: number) {
   }
 }
 
-class AxiosError extends Error {
-  readonly _tag = "AxiosError"
-  constructor(message: string) {
-    super(message);
-  }
-}
-
-class JSONRPCError extends Error {
-  readonly _tag = "JSONRPCError"
-
-  constructor(message: string) {
-    super(message);
-  }
-}
-
-// get chain id from ethereum rpc api 
-async function getChainId(rpcUrl: string) {
-  try {
-    const response = await axios.post(rpcUrl, {
-      jsonrpc: '2.0',
-      id: + new Date(),
-      method: 'eth_chainId',
-      params: [],
-    }, {
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*'
-      },
-    })
-
-    if (response.data.error) {
-      throw new JSONRPCError(response.data.error.message)
-    }
-    return Number(response.data.result)
-  } catch (error: any) {
-    if (error instanceof JSONRPCError) {
-      throw error
-    } else {
-      throw new AxiosError(error.message)
-    }
-  }
-}
-
-async function main() {
-  console.log(await getRpcUrl(1))
-}
-main()
-
 export { chainMapping, getRpcUrl }
+
+
