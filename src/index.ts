@@ -17,6 +17,7 @@ const axEstimateFee = axelarBuildEstimateFee(Environment.MAINNET);
 const axEstimateFeeTestnet = axelarBuildEstimateFee(Environment.TESTNET);
 
 const app: Express = express();
+const host = '0.0.0.0'
 const port = 3001;
 
 app.get('/', (req: Request, res: Response) => {
@@ -118,6 +119,6 @@ function errorWith(res: Response, code: number, message: string) {
   )
 }
 
-app.listen(port, () => {
-  console.log(`[Server]: I am running at https://localhost:${port}`);
+app.listen(port, host, () => {
+  console.log(`[Server]: I am running at https://${host}:${port}`);
 });
