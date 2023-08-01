@@ -16,6 +16,6 @@ curl 'http://localhost:3001/axelar-testnet/estimate_fee?from_chain_id=97&to_chai
 ```
 
 ## TODOs
-[x] rpc url validation and correction checking.  
-[ ] cache result for several minutes for better performance.  
-[ ] axelar chain id automation.  
+- [x] rpc url validation and correction checking.  
+- [ ] cache result for several minutes for better performance.  
+- [ ] axelar chain id automation.  
