@@ -6,6 +6,7 @@ issue for the [spec](https://github.com/darwinia-network/darwinia-msgport/issues
 
 0. clone this repo to your local.
 1. `npm install`
+2. create and config your local `.env` file.
 2. `npm run start:dev`
 
 ```bash

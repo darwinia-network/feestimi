@@ -1,3 +1,4 @@
 node_modules
 build
 scripts/generate-axelar-chain-info.rb
+.env

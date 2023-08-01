@@ -46,7 +46,7 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   const gasLimit = req.query.gas_limit as string
   console.log(`fromChain: ${fromChainId}, toChain: ${toChainId}, gasLimit: ${gasLimit})`)
   if (!fromChainId || !toChainId || !gasLimit) {
-    errorWith(res, 101, `from_chain_id, to_chain_id and gas_limit are required`)
+    errorWith(res, 101, `'from_chain_id', 'to_chain_id' and 'gas_limit' are required`)
     return;
   }
 
@@ -56,13 +56,13 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   console.log(`payload: ${payload}, fromAddress: ${fromAddress}, toAddress: ${toAddress})`)
   if (platform == 'layerzero') {
     if (!payload) {
-      errorWith(res, 101, `payload is required for layerzero`)
+      errorWith(res, 101, `'payload' is required for layerzero`)
       return;
     }
   }
 
   ///////////////////////////////////
-  // Estimate Fees
+  // Estimate Fee
   ///////////////////////////////////
   const fromChainIdInt = parseInt(fromChainId)
   const toChainIdInt = parseInt(toChainId)

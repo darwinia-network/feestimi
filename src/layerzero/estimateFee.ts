@@ -1,19 +1,26 @@
 import { Contract, ethers } from "ethers";
 import getLzChainInfo from "./lzChainInfo";
-import { ChainInfoMissingError, ChainNotFoundError, UnknownError, ChainNotFoundInMiniError, FeeBaseError, LayerzeroError } from "../errors";
+import { ChainInfoMissingError, ChainNotFoundError, UnknownError, ChainNotFoundInMiniError, LayerzeroError } from "../errors";
 import { Effect, pipe } from "effect";
-import chainMapping from "../chainsMini";
+import { getRpcUrl } from "../chainsMini";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
 
 const buildEstimateFee = () => {
   const getProvider = (chainId: number): Effect.Effect<never, ChainNotFoundInMiniError, ethers.providers.Provider> => {
-    const url = getProviderUrl(chainId);
-
-    if (!url) {
-      return Effect.fail(new ChainNotFoundInMiniError(chainId))
-    }
-    const provider = new ethers.providers.JsonRpcProvider(url);
-    return Effect.succeed(provider);
+    return pipe(
+      Effect.promise(
+        () => getRpcUrl(chainId),
+      ),
+      Effect.flatMap((url) => {
+        if (!url) {
+          return Effect.fail(new ChainNotFoundInMiniError(chainId))
+        } else {
+          console.log(`Layerzero estimate fee json rpc url: ${url}`)
+          return Effect.succeed(url)
+        }
+      }),
+      Effect.map((url) => new ethers.providers.JsonRpcProvider(url as string))
+    )
   }
 
   // TODO: cache
@@ -96,16 +103,6 @@ function adapterParamsV1(gasLimit: number) {
     ["uint16", "uint256"],
     [1, gasLimit]
   )
-}
-
-function getProviderUrl(chainId: number) {
-  const chain: { [key: string]: any } = chainMapping[chainId]
-  if (!chain) {
-    return null
-  }
-
-  const rpcList: string[] = chain.rpc
-  return rpcList.find((rpc) => !rpc.includes("$"))
 }
 
 export default buildEstimateFee;
