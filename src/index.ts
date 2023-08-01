@@ -18,7 +18,7 @@ const axEstimateFeeTestnet = axelarBuildEstimateFee(Environment.TESTNET);
 
 const app: Express = express();
 const host = '0.0.0.0'
-const port = 3001;
+const port = 3389;
 
 app.get('/', (req: Request, res: Response) => {
   res.send('Hello, Darwinia');
