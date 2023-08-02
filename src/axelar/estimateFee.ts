@@ -5,7 +5,7 @@ import {
 } from "@axelar-network/axelarjs-sdk";
 import chainInfo from "./chainInfo";
 import chainInfoTestnet from "./chainInfoTestnet";
-import { AxelarError, ChainNotFoundError, UnknownError } from "../errors";
+import { MessagingLayerError, FeestimiError } from "../errors";
 import { Effect, pipe } from "effect";
 
 const buildEstimateFee = (environment: Environment): IEstimateFee => {
@@ -37,7 +37,7 @@ const buildEstimateFee = (environment: Environment): IEstimateFee => {
             axSrcGasToken,
             gasLimit,
           ),
-          catch: (error) => new AxelarError(`${error}`)
+          catch: (error) => new MessagingLayerError('axelar', `${error}`)
         }),
         Effect.map((result) => result as string)
       )
@@ -45,7 +45,7 @@ const buildEstimateFee = (environment: Environment): IEstimateFee => {
       if (error.code) {
         return Effect.fail(error)
       } else {
-        return Effect.fail(new UnknownError(999, `${error}`))
+        return Effect.fail(new MessagingLayerError('axelar', `${error}`))
       }
     }
   }
@@ -61,7 +61,7 @@ function getChainInfo(environment: Environment, chainId: number) {
     chain = chainInfoTestnet[chainId];
   }
   if (!chain) {
-    throw new ChainNotFoundError(chainId, "axelar", "from")
+    throw new FeestimiError(chainId, "chain id not found")
   }
   return chain;
 }

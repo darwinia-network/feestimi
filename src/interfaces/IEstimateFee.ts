@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { FeeBaseError } from "../errors";
+import { BaseError } from "../errors";
 
 type IEstimateFee = (
   fromChain: number,
@@ -9,6 +9,6 @@ type IEstimateFee = (
   payload?: string,
   fromDappAddress?: string,
   toDappAddress?: string
-) => Effect.Effect<never, FeeBaseError, string>;
+) => Effect.Effect<never, BaseError, string>;
 
 export { IEstimateFee };

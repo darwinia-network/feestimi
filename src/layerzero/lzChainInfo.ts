@@ -1,4 +1,4 @@
-import { ChainNotFoundError, MultiChainIdFound } from "../errors";
+import { FeestimiError } from "../errors";
 
 const { ChainId, ChainListId, LZ_ADDRESS, ChainKey } = require("@layerzerolabs/lz-sdk");
 
@@ -15,10 +15,10 @@ function getLzChainEnumKey(chainId: number) {
   })
 
   if (result.length == 0) {
-    throw new ChainNotFoundError(chainId, "layerzero")
+    throw new FeestimiError(chainId, "chain id not found")
   }
   if (result.length > 1) {
-    throw new MultiChainIdFound(chainId, 'layerzero')
+    throw new FeestimiError(chainId, 'chain id multiple mappings matches')
   }
 
   return result[0]

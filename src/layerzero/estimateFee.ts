@@ -1,19 +1,19 @@
 import { Contract, ethers } from "ethers";
 import getLzChainInfo from "./lzChainInfo";
-import { ChainInfoMissingError, ChainNotFoundError, UnknownError, ChainNotFoundInMiniError, LayerzeroError } from "../errors";
+import { FeestimiError, MessagingLayerError } from "../errors";
 import { Effect, pipe } from "effect";
 import { getRpcUrl } from "../chainsMini";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
 
 const buildEstimateFee = () => {
-  const getProvider = (chainId: number): Effect.Effect<never, ChainNotFoundInMiniError, ethers.providers.Provider> => {
+  const getProvider = (chainId: number): Effect.Effect<never, FeestimiError, ethers.providers.Provider> => {
     return pipe(
       Effect.promise(
         () => getRpcUrl(chainId),
       ),
       Effect.flatMap((url) => {
         if (!url) {
-          return Effect.fail(new ChainNotFoundInMiniError(chainId))
+          return Effect.fail(new FeestimiError(chainId, 'json rpc url not found'))
         } else {
           console.log(`Layerzero estimate fee json rpc url: ${url}`)
           return Effect.succeed(url)
@@ -49,15 +49,15 @@ const buildEstimateFee = () => {
     try {
       const [, lzFromChainId, lzFromEndpointAddress] = getLzChainInfo(fromChain);
       if (!lzFromChainId) {
-        return Effect.fail(new ChainNotFoundError(fromChain, "layerzero", "from"))
+        return Effect.fail(new FeestimiError(fromChain, "chain id not found"))
       }
       if (!lzFromEndpointAddress) {
-        return Effect.fail(new ChainInfoMissingError(fromChain, 'lzFromEndpointAddress'))
+        return Effect.fail(new FeestimiError(fromChain, 'lzFromEndpointAddress not found'))
       }
 
       const [, lzToChainId,] = getLzChainInfo(toChain);
       if (!lzToChainId) {
-        return Effect.fail(new ChainNotFoundError(toChain, "layerzero", "to"))
+        return Effect.fail(new FeestimiError(toChain, "chain id not found"))
       }
 
       console.log(`Layerzero estimate fee fromChain: ${lzFromChainId}, toChain: ${lzToChainId}`);
@@ -75,7 +75,7 @@ const buildEstimateFee = () => {
             false,
             adapterParamsV1(gasLimit)
           ),
-          catch: (error) => new LayerzeroError(`${error}`)
+          catch: (error) => new MessagingLayerError('layerzero', `${error}`)
         })
       }
 
@@ -89,7 +89,7 @@ const buildEstimateFee = () => {
       if (error.code) {
         return Effect.fail(error)
       } else {
-        return Effect.fail(new UnknownError(999, `${error}`))
+        return Effect.fail(new MessagingLayerError('layerzero', `${error}`))
       }
     }
   }
