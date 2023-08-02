@@ -7,13 +7,22 @@ issue for the [spec](https://github.com/darwinia-network/darwinia-msgport/issues
 0. clone this repo to your local.
 1. `npm install`
 2. create and config your local `.env` file.
-2. `npm run start:dev`
+3. `npm run start:dev`
 
+## API
+
+* /:platform/estimate_fee
 ```bash
 curl 'http://localhost:3001/layerzero/estimate_fee?from_chain_id=97&to_chain_id=1287&gas_limit=300000&payload=0x12345678'
 curl 'http://localhost:3001/axelar/estimate_fee?from_chain_id=97&to_chain_id=1287&gas_limit=300000'
 curl 'http://localhost:3001/axelar-testnet/estimate_fee?from_chain_id=97&to_chain_id=1287&gas_limit=300000'
 ```
+
+* /chains
+```bash
+curl http://localhost:3389/chains
+```
+
 
 ## RESULT
 

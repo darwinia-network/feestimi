@@ -1,6 +1,7 @@
 // https://khalilstemmler.com/blogs/typescript/node-starter-project/
 import express, { Express, Request, Response } from 'express';
 import chainIds from './chainIds';
+import { chainMapping } from './chainsMini';
 import { Effect, pipe } from "effect";
 import { IEstimateFee } from './interfaces/IEstimateFee';
 
@@ -23,7 +24,16 @@ app.get('/', (req: Request, res: Response) => {
 });
 
 app.get('/chains', (req: Request, res: Response) => {
-  res.send(chainIds);
+  const result: { [key: number]: string } = {}
+
+  const chainIds = Object.keys(chainMapping)
+  for (let i = 0; i < chainIds.length; i++) {
+    const chainId: number = parseInt(chainIds[i])
+    const chain = chainMapping[chainId]
+    const chainName = (chain as { name: string }).name
+    result[chainId] = chainName
+  }
+  ok(res, result)
 });
 
 /**
