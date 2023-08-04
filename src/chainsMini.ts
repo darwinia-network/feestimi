@@ -1,6 +1,9 @@
 import * as chains from "./chains_mini.json";
 import 'dotenv/config'
 import { getChainId } from "./jsonRpcUtils";
+import { Effect, pipe } from "effect";
+import { ethers } from "ethers";
+import { FeestimiError } from "./errors";
 
 const chainMapping: { [key: number]: object } = {}
 
@@ -60,6 +63,24 @@ async function isAliveAndCorrect(rpcUrl: string, chainId: number) {
   }
 }
 
-export { chainMapping, getRpcUrl }
+const getProvider = (chainId: number): Effect.Effect<never, FeestimiError, ethers.providers.Provider> => {
+  return pipe(
+    Effect.promise(
+      () => getRpcUrl(chainId),
+    ),
+    Effect.flatMap((url) => {
+      if (!url) {
+        return Effect.fail(new FeestimiError(chainId, 'json rpc url not found'))
+      } else {
+        console.log(`json rpc url: ${url}`)
+        return Effect.succeed(url)
+      }
+    }),
+    Effect.map((url) => new ethers.providers.JsonRpcProvider(url as string))
+  )
+}
+
+
+export { chainMapping, getRpcUrl, getProvider }
 
 

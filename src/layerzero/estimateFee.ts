@@ -2,27 +2,10 @@ import { Contract, ethers } from "ethers";
 import getLzChainInfo from "./lzChainInfo";
 import { FeestimiError, MessagingLayerError } from "../errors";
 import { Effect, pipe } from "effect";
-import { getRpcUrl } from "../chainsMini";
+import { getProvider } from "../chainsMini";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
 
 const buildEstimateFee = () => {
-  const getProvider = (chainId: number): Effect.Effect<never, FeestimiError, ethers.providers.Provider> => {
-    return pipe(
-      Effect.promise(
-        () => getRpcUrl(chainId),
-      ),
-      Effect.flatMap((url) => {
-        if (!url) {
-          return Effect.fail(new FeestimiError(chainId, 'json rpc url not found'))
-        } else {
-          console.log(`Layerzero estimate fee json rpc url: ${url}`)
-          return Effect.succeed(url)
-        }
-      }),
-      Effect.map((url) => new ethers.providers.JsonRpcProvider(url as string))
-    )
-  }
-
   // TODO: cache
   const getLzEndpoint = (provider: ethers.providers.Provider, lzEndpointAddress: string): ethers.Contract => {
     return new ethers.Contract(
