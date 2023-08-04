@@ -1,6 +1,7 @@
 import { BigNumber, ethers } from "ethers";
 import { getProvider } from "./chainsMini";
 import { pipe, Effect } from "effect";
+import { BaseError, FeestimiError } from "./errors";
 
 type ContractInfo = {
   contractAddress: string,
@@ -23,28 +24,27 @@ const getGasPrice = async (provider: ethers.providers.Provider) => {
   return await provider.getGasPrice();
 }
 
+const effectEstimateGas = (chainId: number, contract: ethers.Contract, functionName: string, ...params: any[]): Effect.Effect<never, BaseError, any> => {
+  return Effect.tryPromise({
+    try: () => estimateGas(contract, functionName, params),
+    catch: (error) => new FeestimiError(chainId, `${error}`)
+  })
+}
+
+const effectGasPrice = (chainId: number, provider: ethers.providers.Provider): Effect.Effect<never, BaseError, BigNumber> => {
+  return Effect.tryPromise({
+    try: () => getGasPrice(provider),
+    catch: (error) => new FeestimiError(chainId, `${error}`)
+  })
+}
+
 function estimateExecutionFee(chainId: number, info: ContractInfo, functionName: string, ...params: any[]): Effect.Effect<never, Error, BigNumber> {
-
-  const effectEstimateGas = (contract: ethers.Contract, functionName: string, ...params: any[]): Effect.Effect<never, Error, any> => {
-    return Effect.tryPromise({
-      try: () => estimateGas(contract, functionName, params),
-      catch: (error) => new Error(`${error}`)
-    })
-  }
-
-  const effectGasPrice = (provider: ethers.providers.Provider): Effect.Effect<never, Error, BigNumber> => {
-    return Effect.tryPromise({
-      try: () => getGasPrice(provider),
-      catch: (error) => new Error(`${error}`)
-    })
-  }
-
   return pipe(
     Effect.Do,
     Effect.bind('provider', () => getProvider(chainId)),
     Effect.let('contract', ({ provider }) => getContract(provider, info.contractAddress, info.contractAbi)),
-    Effect.bind('gasLimit', ({ contract }) => effectEstimateGas(contract, functionName, ...params)),
-    Effect.bind('gasPrice', ({ provider }) => effectGasPrice(provider)),
+    Effect.bind('gasLimit', ({ contract }) => effectEstimateGas(chainId, contract, functionName, ...params)),
+    Effect.bind('gasPrice', ({ provider }) => effectGasPrice(chainId, provider)),
     Effect.map(({ gasLimit, gasPrice }) => gasLimit.mul(gasPrice)),
   )
 }
@@ -68,4 +68,4 @@ function estimateExecutionFee(chainId: number, info: ContractInfo, functionName:
 //
 // main()
 
-export { estimateExecutionFee, ContractInfo }
+export { estimateExecutionFee, ContractInfo, effectGasPrice }

@@ -15,6 +15,10 @@ import { Environment } from "@axelar-network/axelarjs-sdk";
 const axEstimateFee = axelarBuildEstimateFee(Environment.MAINNET);
 const axEstimateFeeTestnet = axelarBuildEstimateFee(Environment.TESTNET);
 
+// axelar
+import celerBuildEstimateFee from "./celer/estimateFee";
+const celerEstimateFee = celerBuildEstimateFee();
+
 const app: Express = express();
 const host = '0.0.0.0'
 const port = 3389;
@@ -63,9 +67,15 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   const fromAddress: string = req.query.from_address as string;
   const toAddress: string = req.query.to_address as string;
   console.log(`payload: ${payload}, fromAddress: ${fromAddress}, toAddress: ${toAddress})`)
-  if (platform == 'layerzero') {
+  if (platform == 'layerzero' || platform == 'celer') {
     if (!payload) {
-      errorWith(res, 101, `'payload' is required for layerzero`)
+      errorWith(res, 101, `'payload' is required for ${platform}`)
+      return;
+    }
+  }
+  if (platform == 'celer') {
+    if (!fromAddress || !toAddress) {
+      errorWith(res, 101, `'fromAddress' and 'toAddress' is required for celer`)
       return;
     }
   }
@@ -83,6 +93,8 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
     run(res, axEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt)
   } else if (platform == 'axelar-testnet') {
     run(res, axEstimateFeeTestnet, fromChainIdInt, toChainIdInt, gasLimitInt)
+  } else if (platform == 'celer') {
+    run(res, celerEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress, toAddress)
   } else {
     errorWith(res, 100, 'Unsupported platform')
   }
