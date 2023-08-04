@@ -59,26 +59,28 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   const gasLimit = req.query.gas_limit as string
   console.log(`fromChain: ${fromChainId}, toChain: ${toChainId}, gasLimit: ${gasLimit})`)
   if (!fromChainId || !toChainId || !gasLimit) {
-    errorWith(res, 101, `'from_chain_id', 'to_chain_id' and 'gas_limit' are required`)
+    errorWith(res, 1, `'from_chain_id', 'to_chain_id' and 'gas_limit' are required`)
     return;
   }
 
   const payload: string = req.query.payload as string;
   const fromAddress: string = req.query.from_address as string;
   const toAddress: string = req.query.to_address as string;
+  const extra: string = req.query.extra as string; // extra=[[1, 10]]
   console.log(`payload: ${payload}, fromAddress: ${fromAddress}, toAddress: ${toAddress})`)
   if (platform == 'layerzero' || platform == 'celer') {
     if (!payload) {
-      errorWith(res, 101, `'payload' is required for ${platform}`)
+      errorWith(res, 1, `'payload' is required for ${platform}`)
       return;
     }
   }
   if (platform == 'celer') {
-    if (!fromAddress || !toAddress) {
-      errorWith(res, 101, `'fromAddress' and 'toAddress' is required for celer`)
+    if (!fromAddress || !toAddress || !extra) {
+      errorWith(res, 1, `'fromAddress', 'toAddress' and 'extra' is required for celer`)
       return;
     }
   }
+
 
   ///////////////////////////////////
   // Estimate Fee
@@ -94,7 +96,8 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   } else if (platform == 'axelar-testnet') {
     run(res, axEstimateFeeTestnet, fromChainIdInt, toChainIdInt, gasLimitInt)
   } else if (platform == 'celer') {
-    run(res, celerEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress, toAddress)
+    const extraParams: any[] = JSON.parse(extra)
+    run(res, celerEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress, toAddress, extraParams)
   } else {
     errorWith(res, 100, 'Unsupported platform')
   }
@@ -108,11 +111,12 @@ function run(
   gasLimit: number,
   payload?: string,
   fromDappAddress?: string,
-  toDappAddress?: string
+  toDappAddress?: string,
+  extraParams?: any[]
 ) {
   Effect.runPromise(
     pipe(
-      program(fromChainId, toChainId, gasLimit, payload, fromDappAddress, toDappAddress),
+      program(fromChainId, toChainId, gasLimit, payload, fromDappAddress, toDappAddress, extraParams),
       Effect.match({
         onFailure: (error) => {
           errorWith(res, error.code, error.message as string)

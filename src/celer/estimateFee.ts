@@ -24,10 +24,23 @@ const buildEstimateFee = () => {
     gasLimit,
     payload,
     fromDappAddress,
-    toDappAddress
+    toDappAddress,
+    extraParams
   ) => {
 
     const clFromChainBusAddress = chainInfo[fromChain]
+    if (!clFromChainBusAddress) {
+      return Effect.fail(new MessagingLayerError('celer', `chain id not found: ${fromChain}`))
+    }
+    if (chainInfo[toChain] == undefined) {
+      return Effect.fail(new MessagingLayerError('celer', `chain id not found: ${toChain}`))
+    }
+
+    // src wei: $10, dst wei: $1,
+    // weiPriceRatio: [10, 1]
+    // src wei: $1, dst wei: $10,
+    // weiPriceRatio: [1, 10]
+    const weiPriceRatio: [number, number] = extraParams?.[0] ?? 1
 
     // https://github.com/darwinia-network/darwinia-msgport/blob/2612c1d485a2521530d4246ab31bcc2d13276ae0/contracts/lines/CelerLine.sol#L51-L55
     const message = ethers.utils.solidityPack(
@@ -56,9 +69,11 @@ const buildEstimateFee = () => {
         ),
         Effect.bind('executionFee', ({ provider }) =>
           pipe(
-            Effect.succeed(provider),
-            Effect.flatMap((provider) => effectGasPrice(toChain, provider)),
-            Effect.map((gasPrice) => gasPrice.mul(gasLimit))
+            Effect.Do,
+            Effect.let('provider', () => provider),
+            Effect.bind('gasPriceToChain', ({ provider }) => effectGasPrice(toChain, provider)),
+            Effect.map(({ gasPriceToChain }) => gasPriceToChain.mul(gasLimit).mul('11').div('10')),
+            Effect.map((feeInWei) => feeInWei.mul(weiPriceRatio[1]).div(weiPriceRatio[0])),
           )
         ),
         Effect.map(({ sgnFee, executionFee }) => executionFee.add(sgnFee).toString())
