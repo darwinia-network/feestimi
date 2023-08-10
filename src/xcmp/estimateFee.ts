@@ -13,7 +13,7 @@ const buildEstimateFee = () => {
     wrappedMessage,
     fromDockAddress,
     toDockAddress,
-    extraParams
+    extraParams?: number[][]
   ) => {
     async function calldataOfDockRecv(provider: ethers.providers.Provider) {
       const tgtDockContract = new Contract(
@@ -60,7 +60,7 @@ const buildEstimateFee = () => {
       })
     }
 
-    const calcSourceUnits = (paymentInfo: any, extraParams: number[][] | undefined) => {
+    const calcSourceUnits = (paymentInfo: any) => {
       if (!extraParams) {
         throw new Error("extraParams is undefined")
       }
@@ -88,7 +88,7 @@ const buildEstimateFee = () => {
       Effect.bind('api', () => effectGetSubstrateApi(toChainId)),
       Effect.flatMap(({ provider, api }) => effectCreateExtrinsic(provider, api)),
       Effect.map(({ paymentInfo }) => {
-        return calcSourceUnits(paymentInfo, extraParams).toString()
+        return calcSourceUnits(paymentInfo).toString()
       })
     )
 

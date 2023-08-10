@@ -68,4 +68,4 @@ function estimateExecutionFee(chainId: number, info: ContractInfo, functionName:
 //
 // main()
 
-export { estimateExecutionFee, ContractInfo, effectGasPrice }
+export { estimateExecutionFee, ContractInfo, getGasPrice, effectGasPrice }
