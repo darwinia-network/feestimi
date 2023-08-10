@@ -5,6 +5,9 @@ import { chainMapping } from './chainsMini';
 import { Effect, pipe } from "effect";
 import { IEstimateFee } from './interfaces/IEstimateFee';
 
+////////////////////////////////////////////
+// Prepare estimateFee functions
+////////////////////////////////////////////
 // layerzero
 import layerzeroBuildEstimateFee from "./layerzero/estimateFee";
 const lzEstimateFee = layerzeroBuildEstimateFee()
@@ -23,6 +26,9 @@ const celerEstimateFee = celerBuildEstimateFee();
 import xcmpBuildEstimateFee from "./xcmp/estimateFee";
 const xcmpEstimateFee = xcmpBuildEstimateFee();
 
+////////////////////////////////////////////
+// Server
+////////////////////////////////////////////
 const app: Express = express();
 const host = '0.0.0.0'
 const port = 3389;
@@ -55,9 +61,9 @@ app.get('/chains', (req: Request, res: Response) => {
 app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   const platform = req.params.platform;
 
-  ///////////////////////////////////
+  ////////////////////
   // Request Params
-  ///////////////////////////////////
+  ////////////////////
   const fromChainId = req.query.from_chain_id as string
   const toChainId = req.query.to_chain_id as string
   const gasLimit = req.query.gas_limit as string
@@ -86,33 +92,33 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   }
 
 
-  ///////////////////////////////////
+  ////////////////////
   // Estimate Fee
-  ///////////////////////////////////
+  ////////////////////
   const fromChainIdInt = parseInt(fromChainId)
   const toChainIdInt = parseInt(toChainId)
   const gasLimitInt = parseInt(gasLimit)
 
-  try {
-    if (platform == 'layerzero') {
-      run(res, lzEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress)
-    } else if (platform == 'axelar') {
-      run(res, axEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt)
-    } else if (platform == 'axelar-testnet') {
-      run(res, axEstimateFeeTestnet, fromChainIdInt, toChainIdInt, gasLimitInt)
-    } else if (platform == 'celer') {
-      // [10, 1] means 10 source units = 1 target units
-      // [1, 10] means 1 source unit = 10 target units
-      const extraParams: any[] = JSON.parse(extra)
-      run(res, celerEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress, toAddress, extraParams)
-    } else if (platform == 'xcmp') {
-      const extraParams: any[] = JSON.parse(extra)
-      run(res, xcmpEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress, toAddress, extraParams)
-    } else {
-      errorWith(res, 100, 'Unsupported platform')
+  if (platform == 'layerzero') {
+    run(res, lzEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress)
+  } else if (platform == 'axelar') {
+    run(res, axEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt)
+  } else if (platform == 'axelar-testnet') {
+    run(res, axEstimateFeeTestnet, fromChainIdInt, toChainIdInt, gasLimitInt)
+  } else if (platform == 'celer') {
+    // [10, 1] means 10 source units = 1 target units
+    // [1, 10] means 1 source unit = 10 target units
+    const params = extraParams(res, extra)
+    if (params) {
+      run(res, celerEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress, toAddress, params)
     }
-  } catch (e: any) {
-    errorWith(res, 100, e.message)
+  } else if (platform == 'xcmp') {
+    const params = extraParams(res, extra)
+    if (params) {
+      run(res, xcmpEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress, toAddress, params)
+    }
+  } else {
+    errorWith(res, 100, 'Unsupported platform')
   }
 });
 
@@ -138,6 +144,16 @@ function run(
       }),
     )
   )
+}
+
+function extraParams(res: Response, extra: string) {
+  try {
+    const extraParams: any[] = JSON.parse(extra)
+    return extraParams
+  } catch (error) {
+    errorWith(res, 100, `Invalid 'extra' param: ${error}`)
+    return null
+  }
 }
 
 function ok(res: Response, result: any) {
