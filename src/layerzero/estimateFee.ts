@@ -2,7 +2,7 @@ import { Contract, ethers } from "ethers";
 import getLzChainInfo from "./lzChainInfo";
 import { FeestimiError, MessagingLayerError } from "../errors";
 import { Effect, pipe } from "effect";
-import { getProvider } from "../chainsMini";
+import { effectGetProvider } from "../chainsMini";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
 
 const buildEstimateFee = () => {
@@ -63,7 +63,7 @@ const buildEstimateFee = () => {
       }
 
       return pipe(
-        getProvider(fromChain),
+        effectGetProvider(fromChain),
         Effect.map((provider) => getLzEndpoint(provider, lzFromEndpointAddress)),
         Effect.flatMap((lzEndpoint) => lzEstimateFee(lzEndpoint)),
         Effect.map((result: any) => result.nativeFee.toString())

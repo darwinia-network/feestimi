@@ -1,7 +1,13 @@
+/**
+  * @desc This file provide some helper functions to get evm rpc url and chain info.
+  * @notice This file is based on `chains_mini.json`, keep it updated.
+  * @see https://chainid.network/chains_mini.json
+  */
+
 import * as chains from "./chains_mini.json";
 import 'dotenv/config'
 import { getChainId } from "./jsonRpcUtils";
-import { Effect, pipe } from "effect";
+import { Effect } from "effect";
 import { ethers } from "ethers";
 import { FeestimiError } from "./errors";
 
@@ -18,7 +24,7 @@ const INFURA_API_KEY: string = process.env.INFURA_API_KEY || ''
 const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY || ''
 const ANKR_API_KEY = process.env.ANKR_API_KEY || ''
 
-async function getRpcUrl(chainId: number) {
+async function getRpcUrl(chainId: number): Promise<string | null> {
   const chain: { [key: string]: any } = chainMapping[chainId]
   if (!chain) {
     return null
@@ -26,7 +32,7 @@ async function getRpcUrl(chainId: number) {
 
   const rpcList: string[] = chain.rpc
 
-  let finalRpcUrl: string = ''
+  let finalRpcUrl: string | null = null
   for (let index = 0; index < rpcList.length; index++) {
     const rpc = rpcList[index];
 
@@ -42,9 +48,42 @@ async function getRpcUrl(chainId: number) {
       }
     }
 
-    if (await isAliveAndCorrect(finalRpcUrl, chainId)) {
+    if (await isAliveAndCorrect(finalRpcUrl as string, chainId)) {
       break
     }
+  }
+
+  return finalRpcUrl
+}
+
+async function getWsRpcUrl(chainId: number): Promise<string | null> {
+  const chain: { [key: string]: any } = chainMapping[chainId]
+  if (!chain) {
+    return null
+  }
+
+  const rpcList: string[] = chain.rpc
+
+  let finalRpcUrl: string | null = null
+  for (let index = 0; index < rpcList.length; index++) {
+    const rpc = rpcList[index];
+
+    if (rpc.startsWith('ws')) {
+      if (rpc.includes('${INFURA_API_KEY}')) {
+        finalRpcUrl = rpc.replace("${INFURA_API_KEY}", INFURA_API_KEY)
+      } else if (rpc.includes('${ALCHEMY_API_KEY}')) {
+        finalRpcUrl = rpc.replace('${ALCHEMY_API_KEY}', ALCHEMY_API_KEY)
+      } else if (rpc.includes('${ANKR_API_KEY}')) {
+        finalRpcUrl = rpc.replace('${ALCHEMY_API_KEY}', ANKR_API_KEY)
+      } else {
+        finalRpcUrl = rpc
+      }
+    }
+
+    // TODO: check if ws is alive
+    // if (await isAliveAndCorrect(finalRpcUrl as string, chainId)) {
+    //   break
+    // }
   }
 
   return finalRpcUrl
@@ -63,24 +102,52 @@ async function isAliveAndCorrect(rpcUrl: string, chainId: number) {
   }
 }
 
-const getProvider = (chainId: number): Effect.Effect<never, FeestimiError, ethers.providers.Provider> => {
-  return pipe(
-    Effect.promise(
-      () => getRpcUrl(chainId),
-    ),
-    Effect.flatMap((url) => {
-      if (!url) {
-        return Effect.fail(new FeestimiError(chainId, 'json rpc url not found'))
-      } else {
-        console.log(`json rpc url: ${url}`)
-        return Effect.succeed(url)
-      }
-    }),
-    Effect.map((url) => new ethers.providers.JsonRpcProvider(url as string))
-  )
+const getProvider = async (chainId: number): Promise<ethers.providers.Provider> => {
+  const url = await getRpcUrl(chainId)
+
+  if (!url) {
+    throw 'json rpc url not found'
+  }
+
+  return new ethers.providers.JsonRpcProvider(url as string)
 }
 
+const effectGetProvider = (chainId: number): Effect.Effect<never, FeestimiError, ethers.providers.Provider> => {
+  return Effect.tryPromise({
+    try: () => getProvider(chainId),
+    catch: (error) => new FeestimiError(chainId, `${error}`)
+  })
+}
 
-export { chainMapping, getRpcUrl, getProvider }
+import { ApiPromise, WsProvider } from '@polkadot/api';
 
+const getSubstrateProvider = async (chainId: number): Promise<WsProvider> => {
+  const url = await getWsRpcUrl(chainId)
 
+  if (!url) {
+    throw 'websocket json rpc url not found'
+  }
+
+  return new WsProvider(url as string)
+}
+
+const getSubstrateApi = async (chainId: number): Promise<ApiPromise> => {
+  const substrateProvider = await getSubstrateProvider(chainId)
+  return await ApiPromise.create({ provider: substrateProvider })
+}
+
+const effectGetSubstrateApi = (chainId: number): Effect.Effect<never, FeestimiError, ApiPromise> => {
+  return Effect.tryPromise({
+    try: () => getSubstrateApi(chainId),
+    catch: (error) => new FeestimiError(chainId, `${error}`)
+  })
+}
+
+export {
+  // chainId > chainInfo
+  chainMapping,
+  // http rpc helper
+  getRpcUrl, effectGetProvider, getProvider,
+  // ws rpc helper
+  getWsRpcUrl, getSubstrateProvider, getSubstrateApi, effectGetSubstrateApi
+}

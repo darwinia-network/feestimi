@@ -19,6 +19,10 @@ const axEstimateFeeTestnet = axelarBuildEstimateFee(Environment.TESTNET);
 import celerBuildEstimateFee from "./celer/estimateFee";
 const celerEstimateFee = celerBuildEstimateFee();
 
+// xcmp
+import xcmpBuildEstimateFee from "./xcmp/estimateFee";
+const xcmpEstimateFee = xcmpBuildEstimateFee();
+
 const app: Express = express();
 const host = '0.0.0.0'
 const port = 3389;
@@ -74,9 +78,9 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
       return;
     }
   }
-  if (platform == 'celer') {
+  if (platform == 'celer' || platform == 'xcmp') {
     if (!fromAddress || !toAddress || !extra) {
-      errorWith(res, 1, `'fromAddress', 'toAddress' and 'extra' is required for celer`)
+      errorWith(res, 1, `'fromAddress', 'toAddress' and 'extra' is required for ${platform}`)
       return;
     }
   }
@@ -89,17 +93,26 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   const toChainIdInt = parseInt(toChainId)
   const gasLimitInt = parseInt(gasLimit)
 
-  if (platform == 'layerzero') {
-    run(res, lzEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress)
-  } else if (platform == 'axelar') {
-    run(res, axEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt)
-  } else if (platform == 'axelar-testnet') {
-    run(res, axEstimateFeeTestnet, fromChainIdInt, toChainIdInt, gasLimitInt)
-  } else if (platform == 'celer') {
-    const extraParams: any[] = JSON.parse(extra)
-    run(res, celerEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress, toAddress, extraParams)
-  } else {
-    errorWith(res, 100, 'Unsupported platform')
+  try {
+    if (platform == 'layerzero') {
+      run(res, lzEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress)
+    } else if (platform == 'axelar') {
+      run(res, axEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt)
+    } else if (platform == 'axelar-testnet') {
+      run(res, axEstimateFeeTestnet, fromChainIdInt, toChainIdInt, gasLimitInt)
+    } else if (platform == 'celer') {
+      // [10, 1] means 10 source units = 1 target units
+      // [1, 10] means 1 source unit = 10 target units
+      const extraParams: any[] = JSON.parse(extra)
+      run(res, celerEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress, toAddress, extraParams)
+    } else if (platform == 'xcmp') {
+      const extraParams: any[] = JSON.parse(extra)
+      run(res, xcmpEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress, toAddress, extraParams)
+    } else {
+      errorWith(res, 100, 'Unsupported platform')
+    }
+  } catch (e: any) {
+    errorWith(res, 100, e.message)
   }
 });
 

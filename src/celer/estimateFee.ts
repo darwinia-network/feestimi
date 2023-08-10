@@ -1,7 +1,7 @@
 import { Contract, ethers } from "ethers";
 import { MessagingLayerError } from "../errors";
 import { Effect, pipe } from "effect";
-import { getProvider } from "../chainsMini";
+import { effectGetProvider } from "../chainsMini";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
 import chainInfo from "./chainInfo";
 import { effectGasPrice } from "../estimateExecutionFee";
@@ -58,7 +58,7 @@ const buildEstimateFee = () => {
     try {
       return pipe(
         Effect.Do,
-        Effect.bind('provider', () => getProvider(fromChain)),
+        Effect.bind('provider', () => effectGetProvider(fromChain)),
         Effect.bind('sgnFee', ({ provider }) =>
           pipe(
             Effect.succeed(provider),

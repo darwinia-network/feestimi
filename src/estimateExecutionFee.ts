@@ -1,5 +1,5 @@
 import { BigNumber, ethers } from "ethers";
-import { getProvider } from "./chainsMini";
+import { effectGetProvider } from "./chainsMini";
 import { pipe, Effect } from "effect";
 import { BaseError, FeestimiError } from "./errors";
 
@@ -41,7 +41,7 @@ const effectGasPrice = (chainId: number, provider: ethers.providers.Provider): E
 function estimateExecutionFee(chainId: number, info: ContractInfo, functionName: string, ...params: any[]): Effect.Effect<never, Error, BigNumber> {
   return pipe(
     Effect.Do,
-    Effect.bind('provider', () => getProvider(chainId)),
+    Effect.bind('provider', () => effectGetProvider(chainId)),
     Effect.let('contract', ({ provider }) => getContract(provider, info.contractAddress, info.contractAbi)),
     Effect.bind('gasLimit', ({ contract }) => effectEstimateGas(chainId, contract, functionName, ...params)),
     Effect.bind('gasPrice', ({ provider }) => effectGasPrice(chainId, provider)),
