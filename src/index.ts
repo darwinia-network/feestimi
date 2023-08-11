@@ -41,18 +41,6 @@ app.get('/', (req: Request, res: Response) => {
   res.send('Hello, Darwinia');
 });
 
-app.get('/chains', (req: Request, res: Response) => {
-  const result: { [key: number]: string } = {}
-
-  const chainIds = Object.keys(chainMapping)
-  for (let i = 0; i < chainIds.length; i++) {
-    const chainId: number = parseInt(chainIds[i])
-    const chain = chainMapping[chainId]
-    const chainName = (chain as { name: string }).name
-    result[chainId] = chainName
-  }
-  ok(res, result)
-});
 
 /**
   * from_chain_id: string
