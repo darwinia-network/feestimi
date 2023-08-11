@@ -26,6 +26,10 @@ const celerEstimateFee = celerBuildEstimateFee();
 import xcmpBuildEstimateFee from "./xcmp/estimateFee";
 const xcmpEstimateFee = xcmpBuildEstimateFee();
 
+// ormp
+import ormpBuildEstimateFee from "./ormp/estimateFee";
+const ormpEstimateFee = ormpBuildEstimateFee();
+
 ////////////////////////////////////////////
 // Server
 ////////////////////////////////////////////
@@ -90,6 +94,11 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
       return;
     }
   }
+  if (platform == 'ormp') {
+    if (!payload || !toAddress) {
+      errorWith(res, 1, `'payload' and 'toAddress' is required for ${platform}`)
+    }
+  }
 
 
   ////////////////////
@@ -117,6 +126,8 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
     if (params) {
       run(res, xcmpEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress, toAddress, params)
     }
+  } else if (platform == 'ormp') {
+    run(res, ormpEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, undefined, toAddress)
   } else {
     errorWith(res, 100, 'Unsupported platform')
   }
