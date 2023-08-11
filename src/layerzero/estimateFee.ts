@@ -1,8 +1,8 @@
 import { Contract, ethers } from "ethers";
-import getLzChainInfo from "./lzChainInfo";
+import { effectGetLzChainInfo } from "./lzChainInfo";
 import { FeestimiError, MessagingLayerError } from "../errors";
-import { Effect, pipe } from "effect";
-import { effectGetProvider } from "../chainsMini";
+import { Effect as E, pipe } from "effect";
+import { effectGetProvider } from "../chainsUtils";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
 
 const buildEstimateFee = () => {
@@ -17,64 +17,45 @@ const buildEstimateFee = () => {
     );
   }
 
+  const effectGetLzEndpoint = (provider: ethers.providers.Provider, lzEndpointAddress: string) => {
+    return E.try({
+      try: () => getLzEndpoint(provider, lzEndpointAddress),
+      catch: (error) => new FeestimiError(`${error}`)
+    })
+  }
+
   const estimateFee: IEstimateFee = (
     fromChain,
     toChain,
     gasLimit,
-
-    // Q: Why Layerzero estimateFee needs fromDappAddress and payload?
-    // A: They are used to calc the final relayer fee.
-    //    getUAConfig(fromDappAddress).relayer.getRelayerFee(payload)
     payload,
     fromDappAddress
   ) => {
+    const fromAddress = fromDappAddress == undefined ? ethers.constants.AddressZero : fromDappAddress
+    console.log(`lzToChainId: ${fromAddress}`)
 
-    try {
-      const [, lzFromChainId, lzFromEndpointAddress] = getLzChainInfo(fromChain);
-      if (!lzFromChainId) {
-        return Effect.fail(new FeestimiError(fromChain, "chain id not found"))
-      }
-      if (!lzFromEndpointAddress) {
-        return Effect.fail(new FeestimiError(fromChain, 'lzFromEndpointAddress not found'))
-      }
-
-      const [, lzToChainId,] = getLzChainInfo(toChain);
-      if (!lzToChainId) {
-        return Effect.fail(new FeestimiError(toChain, "chain id not found"))
-      }
-
-      console.log(`Layerzero estimate fee fromChain: ${lzFromChainId}, toChain: ${lzToChainId}`);
-      console.log(`Layerzero estimate fee fromEndpointAddress: ${lzFromEndpointAddress}`)
-
-      const fromAddress = fromDappAddress == undefined ? ethers.constants.AddressZero : fromDappAddress
-      console.log(`lzToChainId: ${fromAddress}`)
-
-      const lzEstimateFee = (lzEndpoint: Contract) => {
-        return Effect.tryPromise({
-          try: () => lzEndpoint.estimateFees(
-            lzToChainId,
-            fromAddress,
-            payload,
-            false,
-            adapterParamsV1(gasLimit)
-          ),
-          catch: (error) => new MessagingLayerError('layerzero', `${error}`)
-        })
-      }
-
-      return pipe(
-        effectGetProvider(fromChain),
-        Effect.map((provider) => getLzEndpoint(provider, lzFromEndpointAddress)),
-        Effect.flatMap((lzEndpoint) => lzEstimateFee(lzEndpoint)),
-        Effect.map((result: any) => result.nativeFee.toString())
-      )
-    } catch (error: any) {
-      if (error.code) {
-        return Effect.fail(error)
-      } else {
-        return Effect.fail(new MessagingLayerError('layerzero', `${error}`))
-      }
+    const effectLzEstimateFee = (lzEndpoint: Contract, lzToChainId: number) => {
+      return E.tryPromise({
+        try: () => lzEndpoint.estimateFees(
+          lzToChainId,
+          fromAddress,
+          payload,
+          false,
+          adapterParamsV1(gasLimit)
+        ),
+        catch: (error) => new MessagingLayerError('layerzero', `${error}`)
+      })
     }
+
+    return pipe(
+      E.Do,
+      E.bind("provider", () => effectGetProvider(fromChain)),
+      E.bind("fromChainInfo", () => effectGetLzChainInfo(fromChain)),
+      E.bind("toChainInfo", () => effectGetLzChainInfo(toChain)),
+      E.bind("lzEndpoint", ({ provider, fromChainInfo }) => effectGetLzEndpoint(provider, fromChainInfo.lzEndpointAddress)),
+      E.flatMap(({ lzEndpoint, toChainInfo }) => effectLzEstimateFee(lzEndpoint, toChainInfo.lzChainId)),
+      E.map((result: any) => result.nativeFee.toString())
+    )
   }
 
   return estimateFee;

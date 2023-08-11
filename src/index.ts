@@ -1,7 +1,5 @@
 // https://khalilstemmler.com/blogs/typescript/node-starter-project/
 import express, { Express, Request, Response } from 'express';
-import chainIds from './chainIds';
-import { chainMapping } from './chainsMini';
 import { Effect, pipe } from "effect";
 import { IEstimateFee } from './interfaces/IEstimateFee';
 

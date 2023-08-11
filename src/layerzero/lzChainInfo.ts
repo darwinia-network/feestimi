@@ -1,3 +1,4 @@
+import { Effect } from "effect";
 import { FeestimiError } from "../errors";
 
 const { ChainId, ChainListId, LZ_ADDRESS, ChainKey } = require("@layerzerolabs/lz-sdk");
@@ -15,25 +16,37 @@ function getLzChainEnumKey(chainId: number) {
   })
 
   if (result.length == 0) {
-    throw new FeestimiError(chainId, "chain id not found")
+    throw new Error("chain id not found")
   }
   if (result.length > 1) {
-    throw new FeestimiError(chainId, 'chain id multiple mappings matches')
+    throw new Error('chain id multiple mappings matches')
   }
 
   return result[0]
 }
 
 function getLzChainKey(lzChainEnumKey: string): string {
-  return ChainKey[lzChainEnumKey]
+  const chainKey = ChainKey[lzChainEnumKey]
+  if (!chainKey) {
+    throw new Error("chain key not found")
+  }
+  return chainKey
 }
 
 function getLzChainId(lzChainEnumKey: string): number {
-  return ChainId[lzChainEnumKey]
+  const chainId = ChainId[lzChainEnumKey]
+  if (!chainId) {
+    throw new Error("chain id not found")
+  }
+  return chainId
 }
 
 function getLzAddress(lzChainKey: string) {
-  return LZ_ADDRESS[lzChainKey]
+  const lzAddress = LZ_ADDRESS[lzChainKey]
+  if (!lzAddress) {
+    throw new Error("lz address not found")
+  }
+  return lzAddress
 }
 
 function getLzChainInfo(chainId: number) {
@@ -41,7 +54,14 @@ function getLzChainInfo(chainId: number) {
   const lzChainId = getLzChainId(lzChainEnumKey)
   const lzChainKey = getLzChainKey(lzChainEnumKey)
   const lzAddress = getLzAddress(lzChainKey)
-  return [lzChainKey, lzChainId, lzAddress]
+  return { lzChainKey, lzChainId, lzEndpointAddress: lzAddress }
 }
 
-export default getLzChainInfo
+function effectGetLzChainInfo(chainId: number) {
+  return Effect.try({
+    try: () => getLzChainInfo(chainId),
+    catch: (error) => new FeestimiError(`${chainId}, ${error}`)
+  })
+}
+
+export { effectGetLzChainInfo }

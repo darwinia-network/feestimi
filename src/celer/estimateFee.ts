@@ -1,10 +1,9 @@
-import { Contract, ethers } from "ethers";
+import { ethers } from "ethers";
 import { MessagingLayerError } from "../errors";
 import { Effect, pipe } from "effect";
-import { effectGetProvider } from "../chainsMini";
+import { effectGetProvider } from "../chainsUtils";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
 import chainInfo from "./chainInfo";
-import { getGasPrice } from "../estimateExecutionFee";
 
 const buildEstimateFee = () => {
   // TODO: cache

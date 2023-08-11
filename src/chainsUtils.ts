@@ -115,7 +115,7 @@ const getProvider = async (chainId: number): Promise<ethers.providers.Provider> 
 const effectGetProvider = (chainId: number): Effect.Effect<never, FeestimiError, ethers.providers.Provider> => {
   return Effect.tryPromise({
     try: () => getProvider(chainId),
-    catch: (error) => new FeestimiError(chainId, `${error}`)
+    catch: (error) => new FeestimiError(`${chainId}, ${error}`)
   })
 }
 
@@ -139,7 +139,7 @@ const getSubstrateApi = async (chainId: number): Promise<ApiPromise> => {
 const effectGetSubstrateApi = (chainId: number): Effect.Effect<never, FeestimiError, ApiPromise> => {
   return Effect.tryPromise({
     try: () => getSubstrateApi(chainId),
-    catch: (error) => new FeestimiError(chainId, `${error}`)
+    catch: (error) => new FeestimiError(`${chainId}, ${error}`)
   })
 }
 

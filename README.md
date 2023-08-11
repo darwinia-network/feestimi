@@ -60,3 +60,7 @@ MessagingLayerError
 - [x] rpc url validation and correction checking.  
 - [ ] cache result for several minutes for better performance.  
 - [ ] axelar chain id automation.  
+
+## effect-ts?
+
+Just try it for fun.

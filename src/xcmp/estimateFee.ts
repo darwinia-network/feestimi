@@ -1,5 +1,5 @@
 import { IEstimateFee } from "../interfaces/IEstimateFee";
-import { effectGetProvider, effectGetSubstrateApi } from "../chainsMini";
+import { effectGetProvider, effectGetSubstrateApi } from "../chainsUtils";
 import { Contract, ethers } from "ethers";
 import { ApiPromise } from '@polkadot/api';
 import { Effect, pipe } from "effect";

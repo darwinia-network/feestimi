@@ -1,7 +1,6 @@
-import { Contract, ethers, BigNumber } from "ethers";
-// import getLzChainInfo from "./lzChainInfo";
+import { Contract, ethers } from "ethers";
 import { Effect, pipe } from "effect";
-import { effectGetProvider } from "../chainsMini";
+import { effectGetProvider } from "../chainsUtils";
 import { FeestimiError, MessagingLayerError } from "../errors";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
 
@@ -33,10 +32,10 @@ const buildEstimateFee = () => {
   ) => {
     const ormpFromEndpointAddress = ormpEndpointAddresses[fromChainId];
     if (!ormpFromEndpointAddress) {
-      return Effect.fail(new FeestimiError(fromChainId, 'ormpFromEndpointAddress not found'))
+      return Effect.fail(new FeestimiError(`ormpFromEndpointAddress for ${fromChainId} not found`))
     }
     if (!toDappAddress) {
-      return Effect.fail(new FeestimiError(toChainId, 'toDappAddress not found'))
+      return Effect.fail(new FeestimiError(`toDappAddress for ${toChainId} not found`))
     }
     console.log(`Layerzero estimate fee fromChain: ${fromChainId}, toChain: ${toChainId}`);
     console.log(`Layerzero estimate fee fromEndpointAddress: ${ormpFromEndpointAddress}`)

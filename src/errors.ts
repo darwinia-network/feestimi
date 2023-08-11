@@ -9,12 +9,10 @@ class BaseError extends Error {
 
 class FeestimiError extends BaseError {
   readonly _tag = "FeestimiError"
-  chainId: number
 
-  constructor(_chainId: number, _message: string) {
-    const message = `FeestimiError: chain id ${_chainId}, ${_message}`
+  constructor(_message: string) {
+    const message = `FeestimiError: ${_message}`
     super(1, message)
-    this.chainId = _chainId
   }
 }
 

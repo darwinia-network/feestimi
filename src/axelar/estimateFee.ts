@@ -61,7 +61,7 @@ function getChainInfo(environment: Environment, chainId: number) {
     chain = chainInfoTestnet[chainId];
   }
   if (!chain) {
-    throw new FeestimiError(chainId, "chain id not found")
+    throw new FeestimiError(`chain id ${chainId} not found`)
   }
   return chain;
 }
