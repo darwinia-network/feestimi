@@ -66,7 +66,7 @@ const buildEstimateFee = () => {
         throw "extraParams[0].length < 2"
       }
 
-      const gasPrice = (await provider.getGasPrice()).toBigInt()
+      const gasPrice = (await provider.getGasPrice()).toBigInt() // tgt gas price
       const tgtUnits = gasPrice * BigInt(gasLimit)
       return tgtUnits * BigInt(extraParams[0][0]) / BigInt(extraParams[0][1])
     }
@@ -79,9 +79,10 @@ const buildEstimateFee = () => {
     }
 
     return E.Do.pipe(
-      E.bind('provider', () => effectGetProvider(fromChain)),
-      E.bind('sgnFee', ({ provider }) => effectSgnFee(provider)),
-      E.bind('executionFee', ({ provider }) => effectExecutionFee(provider)),
+      E.bind('srcProvider', () => effectGetProvider(fromChain)),
+      E.bind('tgtProvider', () => effectGetProvider(toChain)),
+      E.bind('sgnFee', ({ srcProvider }) => effectSgnFee(srcProvider)),
+      E.bind('executionFee', ({ tgtProvider }) => effectExecutionFee(tgtProvider)),
       E.map(({ sgnFee, executionFee }) => (executionFee + sgnFee).toString())
     )
   }
