@@ -1,6 +1,6 @@
-0. gasLimit by user throught evm rpc: 
+0. gasLimit by user throught evm rpc:
 
-   call = TgtXcmpLine.recv(_fromChainId, _fromDappAddress, _toDappAddress, _message)
+   call = TgtXcmpLine.recv(fromChainId, fromDappAddress, toDappAddress, message)
    estimateGas(call) => gasLimit
 
 1. calc `ethereumXcm.transact(...)` weight
@@ -12,9 +12,8 @@
    <!-- weight = calc(refTime, proofSize)   -->
    <!-- fungiable = weight/weight_per_second * glmrPerSeconds -->
 
-
-
-2. convert weight to src native gas units 
+2. convert weight to src native gas units
 
    <!-- gas = weight/weight_per_second * ringPerSeconds(configed by dst chain)    -->
-   gas = partialFee * srcTokensPerTgtToken
+
+   gas = partialFee \* srcTokensPerTgtToken

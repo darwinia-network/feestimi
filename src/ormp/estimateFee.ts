@@ -1,7 +1,7 @@
 import { Contract, ethers } from "ethers";
-import { Effect, pipe } from "effect";
-import { effectGetProvider } from "../chainsUtils";
-import { FeestimiError, MessagingLayerError } from "../errors";
+import { Effect as E, pipe } from "effect";
+import { effectGetContract } from "../chainsUtils";
+import { OrmpError } from "../errors";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
 
 
@@ -9,18 +9,11 @@ const ormpEndpointAddresses: { [key: number]: string } = {
   421613: "0x2CcB8D3c4e13369d509068A8839dcE3fF1CB6E4a",
   43: "0xffF8530727061821d99858Bde3CB6aEd5aae381E"
 }
+const OrmpEndpointAbi = [
+  "function fee(uint256 toChainId, address toUA, bytes calldata encoded, bytes calldata params) external view returns (uint256)",
+]
 
 const buildEstimateFee = () => {
-  // TODO: cache
-  const getOrmpEndpoint = (provider: ethers.providers.Provider, ormpEndpointAddress: string): ethers.Contract => {
-    return new ethers.Contract(
-      ormpEndpointAddress,
-      [
-        "function fee(uint256 toChainId, address toUA, bytes calldata encoded, bytes calldata params) external view returns (uint256)",
-      ],
-      provider
-    );
-  }
 
   const estimateFee: IEstimateFee = (
     fromChainId,
@@ -32,32 +25,31 @@ const buildEstimateFee = () => {
   ) => {
     const ormpFromEndpointAddress = ormpEndpointAddresses[fromChainId];
     if (!ormpFromEndpointAddress) {
-      return Effect.fail(new FeestimiError(`ormpFromEndpointAddress for ${fromChainId} not found`))
+      return E.fail(new OrmpError(`ormpFromEndpointAddress for ${fromChainId} not found`))
     }
     if (!toDappAddress) {
-      return Effect.fail(new FeestimiError(`toDappAddress for ${toChainId} not found`))
+      return E.fail(new OrmpError(`toDappAddress for ${toChainId} not found`))
     }
     console.log(`Layerzero estimate fee fromChain: ${fromChainId}, toChain: ${toChainId}`);
     console.log(`Layerzero estimate fee fromEndpointAddress: ${ormpFromEndpointAddress}`)
     console.log(`toDappAddress: ${toDappAddress}`)
 
     const effectGetOrmpFee = (endpoint: Contract) => {
-      return Effect.tryPromise({
+      return E.tryPromise({
         try: () => endpoint.fee(
           toChainId,
           toDappAddress,
           payload,
           params(gasLimit)
         ),
-        catch: (error) => new MessagingLayerError('ormp', `${error}`)
+        catch: (error) => new OrmpError(`${error}`)
       })
     }
 
     return pipe(
-      effectGetProvider(fromChainId),
-      Effect.map((provider) => getOrmpEndpoint(provider, ormpFromEndpointAddress)),
-      Effect.flatMap((endpoint) => effectGetOrmpFee(endpoint)),
-      Effect.map((result) => `${result}`)
+      effectGetContract(fromChainId, OrmpEndpointAbi, ormpFromEndpointAddress),
+      E.flatMap((endpoint) => effectGetOrmpFee(endpoint)),
+      E.map((result) => `${result}`)
     )
   }
 

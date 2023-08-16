@@ -9,7 +9,7 @@ import 'dotenv/config'
 import { getChainId } from "./jsonRpcUtils";
 import { Effect } from "effect";
 import { ethers } from "ethers";
-import { FeestimiError } from "./errors";
+import { ChainUtilError } from "./errors";
 
 const chainMapping: { [key: number]: object } = {}
 
@@ -112,10 +112,10 @@ const getProvider = async (chainId: number): Promise<ethers.providers.Provider> 
   return new ethers.providers.JsonRpcProvider(url as string)
 }
 
-const effectGetProvider = (chainId: number): Effect.Effect<never, FeestimiError, ethers.providers.Provider> => {
+const effectGetProvider = (chainId: number): Effect.Effect<never, ChainUtilError, ethers.providers.Provider> => {
   return Effect.tryPromise({
     try: () => getProvider(chainId),
-    catch: (error) => new FeestimiError(`${chainId}, ${error}`)
+    catch: (error) => new ChainUtilError(`${chainId}, ${error}`)
   })
 }
 
@@ -136,18 +136,30 @@ const getSubstrateApi = async (chainId: number): Promise<ApiPromise> => {
   return await ApiPromise.create({ provider: substrateProvider })
 }
 
-const effectGetSubstrateApi = (chainId: number): Effect.Effect<never, FeestimiError, ApiPromise> => {
+const effectGetSubstrateApi = (chainId: number): Effect.Effect<never, ChainUtilError, ApiPromise> => {
   return Effect.tryPromise({
     try: () => getSubstrateApi(chainId),
-    catch: (error) => new FeestimiError(`${chainId}, ${error}`)
+    catch: (error) => new ChainUtilError(`${chainId}, ${error}`)
   })
 }
+
+const getContract = async (chainId: number, abi: string[], address: string): Promise<ethers.Contract> => {
+  const provider = await getProvider(chainId)
+  return new ethers.Contract(address, abi, provider);
+}
+
+const effectGetContract = (chainId: number, abi: string[], address: string) => {
+  return Effect.tryPromise({
+    try: () => getContract(chainId, abi, address),
+    catch: (error) => new ChainUtilError(`${error}`)
+  })
+}
+
 
 export {
   // chainId > chainInfo
   chainMapping,
-  // http rpc helper
-  getRpcUrl, effectGetProvider, getProvider,
-  // ws rpc helper
-  getWsRpcUrl, getSubstrateProvider, getSubstrateApi, effectGetSubstrateApi
+  effectGetProvider,
+  effectGetContract,
+  effectGetSubstrateApi
 }

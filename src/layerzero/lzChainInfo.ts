@@ -1,5 +1,5 @@
 import { Effect } from "effect";
-import { FeestimiError } from "../errors";
+import { LayerZeroError } from "../errors";
 
 const { ChainId, ChainListId, LZ_ADDRESS, ChainKey } = require("@layerzerolabs/lz-sdk");
 
@@ -60,7 +60,7 @@ function getLzChainInfo(chainId: number) {
 function effectGetLzChainInfo(chainId: number) {
   return Effect.try({
     try: () => getLzChainInfo(chainId),
-    catch: (error) => new FeestimiError(`${chainId}, ${error}`)
+    catch: (error) => new LayerZeroError(`${chainId}, ${error}`)
   })
 }
 

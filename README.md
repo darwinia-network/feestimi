@@ -11,7 +11,7 @@ issue for the [spec](https://github.com/darwinia-network/darwinia-msgport/issues
 
 ## API
 
-* /:platform/estimate_fee
+- /:platform/estimate_fee
   ```bash
   curl 'http://localhost:3389/layerzero/estimate_fee?from_chain_id=97&to_chain_id=1287&gas_limit=300000&payload=0x12345678'
   curl 'http://localhost:3389/axelar/estimate_fee?from_chain_id=97&to_chain_id=1287&gas_limit=300000'
@@ -21,12 +21,6 @@ issue for the [spec](https://github.com/darwinia-network/darwinia-msgport/issues
   Note 1: extra is an optional array for messaging layer specific params.  
   Note 2: celer is for test only. It has an extra param '[10, 1]' which is the src token price and dst token price ratio.
 
-* /chains
-  ```bash
-  curl http://localhost:3389/chains
-  ```
-
-
 ## RESULT
 
 ```json
@@ -35,12 +29,13 @@ issue for the [spec](https://github.com/darwinia-network/darwinia-msgport/issues
   "data": "1239546427527472"
 }
 ```
-Native gas tokens in wei
 
+Native gas tokens in wei
 
 ## ERRORs
 
 FeestimiError
+
 ```json
 {
   "code": 1,
@@ -49,6 +44,7 @@ FeestimiError
 ```
 
 MessagingLayerError
+
 ```json
 {
   "code": 2,
@@ -57,10 +53,33 @@ MessagingLayerError
 ```
 
 ## TODOs
-- [x] rpc url validation and correction checking.  
-- [ ] cache result for several minutes for better performance.  
-- [ ] axelar chain id automation.  
+
+- [x] rpc url validation and correction checking.
+- [ ] cache result for several minutes for better performance.
+- [ ] axelar chain id automation.
 
 ## effect-ts?
 
 Just try it for fun.
+
+## msgport message estimate fee
+
+```typescript
+// [10, 1] means 10 source units = 1 target units
+// [1, 10] means 1 source unit = 10 target units
+type SrcUnits = number
+type DstUnits = number
+type PriceRatio = [SrcUnits, DstUnits]
+msgport.estimateFee(fromChainId, toChainId, gasLimit, message, priceRatio: PriceRatio) {
+  // now
+  messageLayer.estimateFee(
+    fromChainId,
+    toChainId,
+    gasLimitForMsgport + gasLimit,
+    wrap(message),
+    fromMessageLineAddress,
+    toMessageLineAddress,
+    priceRatio
+  )
+}
+```

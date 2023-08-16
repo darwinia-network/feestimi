@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
-import { MessagingLayerError } from "../errors";
-import { Effect, pipe } from "effect";
+import { CelerError } from "../errors";
+import { Effect as E } from "effect";
 import { effectGetProvider } from "../chainsUtils";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
 import chainInfo from "./chainInfo";
@@ -29,10 +29,10 @@ const buildEstimateFee = () => {
 
     const clFromChainBusAddress = chainInfo[fromChain]
     if (!clFromChainBusAddress) {
-      return Effect.fail(new MessagingLayerError('celer', `chain id not found: ${fromChain}`))
+      return E.fail(new CelerError(`chain id not found: ${fromChain}`))
     }
     if (chainInfo[toChain] == undefined) {
-      return Effect.fail(new MessagingLayerError('celer', `chain id not found: ${toChain}`))
+      return E.fail(new CelerError(`chain id not found: ${toChain}`))
     }
 
     // https://github.com/darwinia-network/darwinia-msgport/blob/2612c1d485a2521530d4246ab31bcc2d13276ae0/contracts/lines/CelerLine.sol#L51-L55
@@ -47,23 +47,23 @@ const buildEstimateFee = () => {
     }
 
     const effectSgnFee = (provider: ethers.providers.Provider) => {
-      return Effect.tryPromise({
+      return E.tryPromise({
         try: () => sgnFee(provider),
-        catch: (error) => new MessagingLayerError('celer', `${error}`)
+        catch: (error) => new CelerError(`${error}`)
       })
     }
 
     const executionFee = async (provider: ethers.providers.Provider) => {
       if (!extraParams) {
-        throw new Error("extraParams is undefined")
+        throw "extraParams is undefined"
       }
 
       if (extraParams.length < 1) {
-        throw new Error("extraParams.length < 1")
+        throw "extraParams.length < 1"
       }
 
       if (extraParams[0].length < 2) {
-        throw new Error("extraParams[0].length < 2")
+        throw "extraParams[0].length < 2"
       }
 
       const gasPrice = (await provider.getGasPrice()).toBigInt()
@@ -72,18 +72,17 @@ const buildEstimateFee = () => {
     }
 
     const effectExecutionFee = (provider: ethers.providers.Provider) => {
-      return Effect.tryPromise({
+      return E.tryPromise({
         try: () => executionFee(provider),
-        catch: (error) => new MessagingLayerError('celer', `${error}`)
+        catch: (error) => new CelerError(`${error}`)
       })
     }
 
-    return pipe(
-      Effect.Do,
-      Effect.bind('provider', () => effectGetProvider(fromChain)),
-      Effect.bind('sgnFee', ({ provider }) => effectSgnFee(provider)),
-      Effect.bind('executionFee', ({ provider }) => effectExecutionFee(provider)),
-      Effect.map(({ sgnFee, executionFee }) => (executionFee + sgnFee).toString())
+    return E.Do.pipe(
+      E.bind('provider', () => effectGetProvider(fromChain)),
+      E.bind('sgnFee', ({ provider }) => effectSgnFee(provider)),
+      E.bind('executionFee', ({ provider }) => effectExecutionFee(provider)),
+      E.map(({ sgnFee, executionFee }) => (executionFee + sgnFee).toString())
     )
   }
 

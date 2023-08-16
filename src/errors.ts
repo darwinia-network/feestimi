@@ -1,34 +1,52 @@
-class BaseError extends Error {
-  code: number
 
-  constructor(code: number, message: string) {
-    super(message)
-    this.code = code
+class ChainUtilError extends Error {
+  readonly _tag = "ChainUtilError";
+
+  constructor(message: string) {
+    super(`ChainUtilError: ${message}`);
   }
 }
 
-class FeestimiError extends BaseError {
-  readonly _tag = "FeestimiError"
+class AxelarError extends Error {
+  readonly _tag = "AxelarError";
 
   constructor(_message: string) {
-    const message = `FeestimiError: ${_message}`
-    super(1, message)
+    super(`AxelarError: ${_message}`);
   }
 }
 
-class MessagingLayerError extends BaseError {
-  readonly _tag = "LowLevelError"
-  lowLevel: string // "layerzero" | "axelar"
+class LayerZeroError extends Error {
+  readonly _tag = "LayerZeroError";
 
-  constructor(_lowLevel: string, _message: string) {
-    const message = `MessagingLayerError: ${_lowLevel}: ${_message}`
-    super(2, message)
-    this.lowLevel = _lowLevel
+  constructor(_message: string) {
+    super(`LayerZeroError: ${_message}`);
   }
 }
 
-export {
-  BaseError,
-  FeestimiError,
-  MessagingLayerError
+class XcmpError extends Error {
+  readonly _tag = "XcmpError";
+
+  constructor(message: string) {
+    super(`XcmpError: ${message}`);
+  }
 }
+
+class OrmpError extends Error {
+  readonly _tag = "OrmpError";
+
+  constructor(message: string) {
+    super(`OrmpError: ${message}`);
+  }
+}
+
+class CelerError extends Error {
+  readonly _tag = "CelerError";
+
+  constructor(message: string) {
+    super(`CelerError: ${message}`);
+  }
+}
+
+type FeestimiError = ChainUtilError | AxelarError | LayerZeroError | XcmpError | OrmpError | CelerError;
+
+export { FeestimiError, ChainUtilError, LayerZeroError, AxelarError, XcmpError, OrmpError, CelerError };

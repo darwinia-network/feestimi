@@ -57,99 +57,69 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   const fromChainId = req.query.from_chain_id as string
   const toChainId = req.query.to_chain_id as string
   const gasLimit = req.query.gas_limit as string
+  const payload: string = req.query.payload as string
+  const fromAddress: string = req.query.from_address as string
+  const toAddress: string = req.query.to_address as string
+  const extra: string = req.query.extra as string; // extra=[[1, 10]]
+  console.log(`platform: ${platform}, extra: ${extra}`)
   console.log(`fromChain: ${fromChainId}, toChain: ${toChainId}, gasLimit: ${gasLimit})`)
-  if (!fromChainId || !toChainId || !gasLimit) {
-    errorWith(res, 1, `'from_chain_id', 'to_chain_id' and 'gas_limit' are required`)
+  console.log(`payload: ${payload}, fromAddress: ${fromAddress}, toAddress: ${toAddress})`)
+  if (!fromChainId || !toChainId || !gasLimit || !payload || !fromAddress || !toAddress || !extra) {
+    errorWith(res, 1, `'from_chain_id', 'to_chain_id', 'gas_limit', 'payload', 'from_address', 'to_address' and 'extra' is required`)
     return;
   }
-
-  const payload: string = req.query.payload as string;
-  const fromAddress: string = req.query.from_address as string;
-  const toAddress: string = req.query.to_address as string;
-  const extra: string = req.query.extra as string; // extra=[[1, 10]]
-  console.log(`payload: ${payload}, fromAddress: ${fromAddress}, toAddress: ${toAddress})`)
-  if (platform == 'layerzero' || platform == 'celer') {
-    if (!payload) {
-      errorWith(res, 1, `'payload' is required for ${platform}`)
-      return;
-    }
-  }
-  if (platform == 'celer' || platform == 'xcmp') {
-    if (!fromAddress || !toAddress || !extra) {
-      errorWith(res, 1, `'fromAddress', 'toAddress' and 'extra' is required for ${platform}`)
-      return;
-    }
-  }
-  if (platform == 'ormp') {
-    if (!payload || !toAddress) {
-      errorWith(res, 1, `'payload' and 'toAddress' is required for ${platform}`)
-    }
-  }
-
 
   ////////////////////
   // Estimate Fee
   ////////////////////
-  const fromChainIdInt = parseInt(fromChainId)
-  const toChainIdInt = parseInt(toChainId)
-  const gasLimitInt = parseInt(gasLimit)
+  const estimateFee = pipe(
+    effectCheckParams(fromChainId, toChainId, gasLimit, fromAddress, toAddress, extra),
+    Effect.flatMap(params => {
+      if (platform == 'layerzero') {
+        return lzEstimateFee(params.fromChainIdInt, params.toChainIdInt, params.gasLimitInt, payload, fromAddress, toAddress, params.extraParams)
+      } else if (platform == 'axelar') {
+        return axEstimateFee(params.fromChainIdInt, params.toChainIdInt, params.gasLimitInt, payload, fromAddress, toAddress, params.extraParams)
+      } else if (platform == 'axelar-testnet') {
+        return axEstimateFeeTestnet(params.fromChainIdInt, params.toChainIdInt, params.gasLimitInt, payload, fromAddress, toAddress, params.extraParams)
+      } else if (platform == 'celer') {
+        return celerEstimateFee(params.fromChainIdInt, params.toChainIdInt, params.gasLimitInt, payload, fromAddress, toAddress, params.extraParams)
+      } else if (platform == 'xcmp') {
+        return xcmpEstimateFee(params.fromChainIdInt, params.toChainIdInt, params.gasLimitInt, payload, fromAddress, toAddress, params.extraParams)
+      } else if (platform == 'ormp') {
+        return ormpEstimateFee(params.fromChainIdInt, params.toChainIdInt, params.gasLimitInt, payload, fromAddress, toAddress, params.extraParams)
+      } else {
+        return Effect.fail(new Error(`Unsupported platform: ${platform}`))
+      }
+    }),
+    Effect.map((result) => ok(res, result))
+  )
 
-  if (platform == 'layerzero') {
-    run(res, lzEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress)
-  } else if (platform == 'axelar') {
-    run(res, axEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt)
-  } else if (platform == 'axelar-testnet') {
-    run(res, axEstimateFeeTestnet, fromChainIdInt, toChainIdInt, gasLimitInt)
-  } else if (platform == 'celer') {
-    // [10, 1] means 10 source units = 1 target units
-    // [1, 10] means 1 source unit = 10 target units
-    const params = extraParams(res, extra)
-    if (params) {
-      run(res, celerEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress, toAddress, params)
-    }
-  } else if (platform == 'xcmp') {
-    const params = extraParams(res, extra)
-    if (params) {
-      run(res, xcmpEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, fromAddress, toAddress, params)
-    }
-  } else if (platform == 'ormp') {
-    run(res, ormpEstimateFee, fromChainIdInt, toChainIdInt, gasLimitInt, payload, undefined, toAddress)
-  } else {
-    errorWith(res, 100, 'Unsupported platform')
-  }
+  Effect.runPromise(estimateFee).catch((e) => errorWith(res, 1, e.message));
 });
 
-function run(
-  res: Response,
-  program: IEstimateFee,
-  fromChainId: number,
-  toChainId: number,
-  gasLimit: number,
-  payload?: string,
-  fromDappAddress?: string,
-  toDappAddress?: string,
-  extraParams?: any[]
-) {
-  Effect.runPromise(
-    pipe(
-      program(fromChainId, toChainId, gasLimit, payload, fromDappAddress, toDappAddress, extraParams),
-      Effect.match({
-        onFailure: (error) => {
-          errorWith(res, error.code, error.message as string)
-        },
-        onSuccess: (result) => ok(res, result)
-      }),
-    )
-  )
+
+function effectCheckParams(fromChainId: string, toChainId: string, gasLimit: string, fromAddress: string, toAddress: string, extra: any) {
+  return Effect.try({
+    try: () => {
+      const fromChainIdInt = parseInt(fromChainId)
+      const toChainIdInt = parseInt(toChainId)
+      const gasLimitInt = parseInt(gasLimit)
+      const extraParams = parseExtraParams(extra)
+      return {
+        fromChainIdInt, toChainIdInt, gasLimitInt, fromAddress, toAddress, extraParams
+      }
+    },
+    catch: (error) => new Error(`Invalid params: ${error}`)
+  })
 }
 
-function extraParams(res: Response, extra: string) {
+function parseExtraParams(extra: string) {
   try {
     const extraParams: any[] = JSON.parse(extra)
     return extraParams
-  } catch (error) {
-    errorWith(res, 100, `Invalid 'extra' param: ${error}`)
-    return null
+  } catch (e: any) {
+    console.error(e.message)
+    return []
   }
 }
 

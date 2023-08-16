@@ -5,55 +5,50 @@ import {
 } from "@axelar-network/axelarjs-sdk";
 import chainInfo from "./chainInfo";
 import chainInfoTestnet from "./chainInfoTestnet";
-import { MessagingLayerError, FeestimiError } from "../errors";
-import { Effect, pipe } from "effect";
+import { AxelarError } from "../errors";
+import { Effect as E } from "effect";
 
 const buildEstimateFee = (environment: Environment): IEstimateFee => {
   const sdk = new AxelarQueryAPI({
     environment: environment,
   });
 
+  const effectEstimateGasFee = (fromChainStr: string, toChainStr: string, srcGasToken: string, gasLimit: number) => {
+    return E.tryPromise({
+      try: () => sdk.estimateGasFee(
+        fromChainStr,
+        toChainStr,
+        srcGasToken,
+        gasLimit,
+      ),
+      catch: (error) => new AxelarError(`${error}`)
+    })
+  }
+
   const estimateFee: IEstimateFee = (
     fromChain,
     toChain,
     gasLimit
   ) => {
-    try {
-      const fromChainInfo = getChainInfo(environment, fromChain);
-      const toChainInfo = getChainInfo(environment, toChain);
-
-      const axFromChainId = fromChainInfo[0];
-      const axToChainId = toChainInfo[0];
-      console.log(`Axelar estimate fee fromChain: ${axFromChainId}, toChain: ${axToChainId}`);
-
-      const axSrcGasToken = fromChainInfo[1];
-      console.log(`Axelar estimate fee SrcGasToken: ${axSrcGasToken}`)
-
-      return pipe(
-        Effect.tryPromise({
-          try: () => sdk.estimateGasFee(
-            axFromChainId,
-            axToChainId,
-            axSrcGasToken,
-            gasLimit,
-          ),
-          catch: (error) => new MessagingLayerError('axelar', `${error}`)
-        }),
-        Effect.map((result) => result as string)
-      )
-    } catch (error: any) {
-      if (error.code) {
-        return Effect.fail(error)
-      } else {
-        return Effect.fail(new MessagingLayerError('axelar', `${error}`))
-      }
-    }
+    return E.Do.pipe(
+      E.bind("fromChainInfo", () => effectGetChainInfo(environment, fromChain)),
+      E.bind("toChainInfo", () => effectGetChainInfo(environment, toChain)),
+      E.flatMap(({ fromChainInfo, toChainInfo }) => effectEstimateGasFee(fromChainInfo[0], toChainInfo[0], fromChainInfo[1], gasLimit)),
+      E.map((result) => result as string)
+    )
   }
 
   return estimateFee;
 }
 
-function getChainInfo(environment: Environment, chainId: number) {
+function effectGetChainInfo(environment: Environment, chainId: number) {
+  return E.try({
+    try: () => getChainInfo(environment, chainId),
+    catch: (e) => new AxelarError(`${e}`)
+  });
+}
+
+function getChainInfo(environment: Environment, chainId: number): [string, string] {
   let chain;
   if (environment === Environment.MAINNET) {
     chain = chainInfo[chainId];
@@ -61,7 +56,7 @@ function getChainInfo(environment: Environment, chainId: number) {
     chain = chainInfoTestnet[chainId];
   }
   if (!chain) {
-    throw new FeestimiError(`chain id ${chainId} not found`)
+    throw `chain id ${chainId} not found`
   }
   return chain;
 }
