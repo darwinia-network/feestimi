@@ -12,9 +12,7 @@ const lzEstimateFee = layerzeroBuildEstimateFee()
 
 // axelar
 import axelarBuildEstimateFee from "./axelar/estimateFee";
-import { Environment } from "@axelar-network/axelarjs-sdk";
-const axEstimateFee = axelarBuildEstimateFee(Environment.MAINNET);
-const axEstimateFeeTestnet = axelarBuildEstimateFee(Environment.TESTNET);
+const axEstimateFee = axelarBuildEstimateFee();
 
 // axelar
 import celerBuildEstimateFee from "./celer/estimateFee";
@@ -65,36 +63,32 @@ app.get('/:platform/estimate_fee', (req: Request, res: Response) => {
   console.log(`fromChain: ${fromChainId}, toChain: ${toChainId}, gasLimit: ${gasLimit})`)
   console.log(`payload: ${payload}, fromAddress: ${fromAddress}, toAddress: ${toAddress})`)
   if (!fromChainId || !toChainId || !gasLimit || !payload || !fromAddress || !toAddress || !extra) {
-    errorWith(res, 1, `'from_chain_id', 'to_chain_id', 'gas_limit', 'payload', 'from_address', 'to_address' and 'extra' is required`)
+    errorWith(res, 1, `'from_chain_id', 'to_chain_id', 'gas_limit', 'payload', 'from_address', 'to_address' and 'extra' are required`)
     return;
   }
 
   ////////////////////
   // Estimate Fee
   ////////////////////
-  const estimateFee = pipe(
+  const program = pipe(
     effectCheckParams(fromChainId, toChainId, gasLimit, fromAddress, toAddress, extra),
-    Effect.flatMap(params => {
-      if (platform == 'layerzero') {
-        return lzEstimateFee(params.fromChainIdInt, params.toChainIdInt, params.gasLimitInt, payload, fromAddress, toAddress, params.extraParams)
-      } else if (platform == 'axelar') {
-        return axEstimateFee(params.fromChainIdInt, params.toChainIdInt, params.gasLimitInt, payload, fromAddress, toAddress, params.extraParams)
-      } else if (platform == 'axelar-testnet') {
-        return axEstimateFeeTestnet(params.fromChainIdInt, params.toChainIdInt, params.gasLimitInt, payload, fromAddress, toAddress, params.extraParams)
-      } else if (platform == 'celer') {
-        return celerEstimateFee(params.fromChainIdInt, params.toChainIdInt, params.gasLimitInt, payload, fromAddress, toAddress, params.extraParams)
-      } else if (platform == 'xcmp') {
-        return xcmpEstimateFee(params.fromChainIdInt, params.toChainIdInt, params.gasLimitInt, payload, fromAddress, toAddress, params.extraParams)
-      } else if (platform == 'ormp') {
-        return ormpEstimateFee(params.fromChainIdInt, params.toChainIdInt, params.gasLimitInt, payload, fromAddress, toAddress, params.extraParams)
-      } else {
-        return Effect.fail(new Error(`Unsupported platform: ${platform}`))
-      }
-    }),
+    Effect.flatMap(
+      (params) =>
+        estimateFee(
+          platform,
+          params.fromChainIdInt,
+          params.toChainIdInt,
+          params.gasLimitInt,
+          payload,
+          params.fromAddress,
+          params.toAddress,
+          params.extraParams
+        )
+    ),
     Effect.map((result) => ok(res, result))
   )
 
-  Effect.runPromise(estimateFee).catch((e) => errorWith(res, 1, e.message));
+  Effect.runPromise(program).catch((e) => errorWith(res, 1, e.message));
 });
 
 app.get('/estimate_fees', (req: Request, res: Response) => {
@@ -137,6 +131,23 @@ app.get('/estimate_fees', (req: Request, res: Response) => {
 
 })
 
+function estimateFee(platform: string, fromChainId: number, toChainId: number, gasLimit: number, payload: string, fromAddress: string, toAddress: string, extraParams: any) {
+  return pipe(
+    Effect.try({
+      try: () => {
+        const result: { default: () => IEstimateFee } = require(`./${platform}/estimateFee`)
+        return result.default
+      },
+      catch: (_e) => {
+        return new Error(`Unsupported platform: ${platform}`)
+      }
+    }),
+    Effect.flatMap(buildEstimateFee => {
+      const estimateFee = buildEstimateFee()
+      return estimateFee(fromChainId, toChainId, gasLimit, payload, fromAddress, toAddress, extraParams)
+    })
+  )
+}
 
 function effectCheckParams(fromChainId: string, toChainId: string, gasLimit: string, fromAddress: string, toAddress: string, extra: any) {
   return Effect.try({
@@ -145,6 +156,7 @@ function effectCheckParams(fromChainId: string, toChainId: string, gasLimit: str
       const toChainIdInt = parseInt(toChainId)
       const gasLimitInt = parseInt(gasLimit)
       const extraParams = parseExtraParams(extra)
+
       return {
         fromChainIdInt, toChainIdInt, gasLimitInt, fromAddress, toAddress, extraParams
       }
