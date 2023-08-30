@@ -1,67 +1,77 @@
-import { Effect } from "effect";
-import { LayerZeroError } from "../errors";
+import { FeestimiError } from "../errors";
 
-const { ChainId, ChainListId, LZ_ADDRESS, ChainKey } = require("@layerzerolabs/lz-sdk");
+const {
+  ChainId,
+  ChainListId,
+  LZ_ADDRESS,
+  ChainKey,
+} = require("@layerzerolabs/lz-sdk");
 
 function getLzChainEnumKey(chainId: number) {
-  const result: string[] = []
+  const result: string[] = [];
 
   // https://stackoverflow.com/questions/50299329/how-to-get-enum-names-as-a-string-array-in-typescript
   const keys = Object.keys(ChainListId).filter((v) => isNaN(Number(v)));
   keys.forEach((key) => {
-    const value = ChainListId[key]
-    if (value == chainId && !key.endsWith("_SANDBOX") && !key.startsWith("APTOS") && key != "GOERLI_MAINNET") {
-      result.push(key)
+    const value = ChainListId[key];
+    if (
+      value == chainId &&
+      !key.endsWith("_SANDBOX") &&
+      !key.startsWith("APTOS") &&
+      key != "GOERLI_MAINNET"
+    ) {
+      result.push(key);
     }
-  })
+  });
 
   if (result.length == 0) {
-    throw new Error("chain id not found")
+    throw new FeestimiError("lz: chain id not found", { context: { chainId } });
   }
   if (result.length > 1) {
-    throw new Error('chain id multiple mappings matches')
+    throw new FeestimiError("lz: chain id multiple mappings matches", {
+      context: { chainId },
+    });
   }
 
-  return result[0]
+  return result[0];
 }
 
 function getLzChainKey(lzChainEnumKey: string): string {
-  const chainKey = ChainKey[lzChainEnumKey]
+  const chainKey = ChainKey[lzChainEnumKey];
   if (!chainKey) {
-    throw new Error("chain key not found")
+    throw new FeestimiError("lz: chain key not found by chain enum key", {
+      context: { lzChainEnumKey },
+    });
   }
-  return chainKey
+  return chainKey;
 }
 
 function getLzChainId(lzChainEnumKey: string): number {
-  const chainId = ChainId[lzChainEnumKey]
+  const chainId = ChainId[lzChainEnumKey];
   if (!chainId) {
-    throw new Error("chain id not found")
+    throw new FeestimiError("lz: chain id not found by chain enum key", {
+      context: { lzChainEnumKey },
+    });
   }
-  return chainId
+  return chainId;
 }
 
 function getLzAddress(lzChainKey: string) {
-  const lzAddress = LZ_ADDRESS[lzChainKey]
+  const lzAddress = LZ_ADDRESS[lzChainKey];
   if (!lzAddress) {
-    throw new Error("lz address not found")
+    throw new FeestimiError("lz: endpoint address not found", {
+      context: { lzChainKey },
+    });
   }
-  return lzAddress
+  return lzAddress;
 }
 
 function getLzChainInfo(chainId: number) {
-  const lzChainEnumKey = getLzChainEnumKey(chainId)
-  const lzChainId = getLzChainId(lzChainEnumKey)
-  const lzChainKey = getLzChainKey(lzChainEnumKey)
-  const lzAddress = getLzAddress(lzChainKey)
-  return { lzChainKey, lzChainId, lzEndpointAddress: lzAddress }
+  const lzChainEnumKey = getLzChainEnumKey(chainId);
+  const lzChainId = getLzChainId(lzChainEnumKey);
+  const lzChainKey = getLzChainKey(lzChainEnumKey);
+  const lzAddress = getLzAddress(lzChainKey);
+  return { lzChainKey, lzChainId, lzEndpointAddress: lzAddress };
 }
 
-function effectGetLzChainInfo(chainId: number) {
-  return Effect.try({
-    try: () => getLzChainInfo(chainId),
-    catch: (error) => new LayerZeroError(`${chainId}, ${error}`)
-  })
-}
-
-export { effectGetLzChainInfo }
+export { getLzChainInfo };

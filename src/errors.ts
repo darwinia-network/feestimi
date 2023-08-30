@@ -1,52 +1,61 @@
+export function ensureError(value: unknown): Error {
+  if (value instanceof Error) return value;
 
-class ChainUtilError extends Error {
-  readonly _tag = "ChainUtilError";
+  let stringified = "[Unable to stringify the thrown value]";
+  try {
+    stringified = JSON.stringify(value);
+  } catch {}
 
-  constructor(message: string) {
-    super(`ChainUtilError: ${message}`);
-  }
+  const error = new Error(
+    `This value was thrown as is, not through an Error: ${stringified}`
+  );
+  return error;
 }
 
-class AxelarError extends Error {
-  readonly _tag = "AxelarError";
+type Jsonable =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | readonly Jsonable[]
+  | { readonly [key: string]: Jsonable }
+  | { toJSON(): Jsonable };
 
-  constructor(_message: string) {
-    super(`AxelarError: ${_message}`);
+export class FeestimiError extends Error {
+  public readonly cause: Error | undefined;
+  public readonly context: Jsonable;
+
+  constructor(
+    message: string,
+    options: { cause?: Error; context?: Jsonable } = {}
+  ) {
+    const { cause, context } = options;
+    super(message);
+    this.name = this.constructor.name;
+
+    this.context = context;
+    this.cause = cause;
   }
+
+  public toString = (): string => {
+    const cause = this.cause ? `. Caused by: ${this.cause}` : "";
+    const context = this.context
+      ? `. Context: ${JSON.stringify(this.context)}`
+      : "";
+
+    return `${this.message}${context}${cause}`;
+  };
 }
 
-class LayerZeroError extends Error {
-  readonly _tag = "LayerZeroError";
+// export type Result<E extends FeestimiError, T> =
+//   | { success: true; result: T }
+//   | { success: false; error: E };
 
-  constructor(_message: string) {
-    super(`LayerZeroError: ${_message}`);
-  }
-}
+// export function ok<T>(result: T): Result<never, T> {
+//   return { success: true, result };
+// }
 
-class XcmpError extends Error {
-  readonly _tag = "XcmpError";
-
-  constructor(message: string) {
-    super(`XcmpError: ${message}`);
-  }
-}
-
-class OrmpError extends Error {
-  readonly _tag = "OrmpError";
-
-  constructor(message: string) {
-    super(`OrmpError: ${message}`);
-  }
-}
-
-class CelerError extends Error {
-  readonly _tag = "CelerError";
-
-  constructor(message: string) {
-    super(`CelerError: ${message}`);
-  }
-}
-
-type FeestimiError = ChainUtilError | AxelarError | LayerZeroError | XcmpError | OrmpError | CelerError;
-
-export { FeestimiError, ChainUtilError, LayerZeroError, AxelarError, XcmpError, OrmpError, CelerError };
+// export function error<E extends FeestimiError>(error: E): Result<E, never> {
+//   return { success: false, error };
+// }

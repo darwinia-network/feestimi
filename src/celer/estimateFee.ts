@@ -1,23 +1,25 @@
 import { ethers } from "ethers";
-import { CelerError } from "../errors";
-import { Effect as E } from "effect";
-import { effectGetProvider } from "../chainsUtils";
+import { FeestimiError, ensureError } from "../errors";
+import { getProvider } from "../chainsUtils";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
 import chainInfo from "./chainInfo";
 
 const buildEstimateFee = () => {
   // TODO: cache
-  const getCelerBus = (provider: ethers.providers.Provider, celerBusAddress: string): ethers.Contract => {
+  const getCelerBus = (
+    provider: ethers.providers.Provider,
+    celerBusAddress: string
+  ): ethers.Contract => {
     return new ethers.Contract(
       celerBusAddress,
       [
-        "function calcFee(bytes calldata _message) external view returns (uint256)"
+        "function calcFee(bytes calldata _message) external view returns (uint256)",
       ],
       provider
     );
-  }
+  };
 
-  const estimateFee: IEstimateFee = (
+  const estimateFee: IEstimateFee = async (
     fromChain,
     toChain,
     gasLimit,
@@ -26,68 +28,60 @@ const buildEstimateFee = () => {
     toDappAddress,
     extraParams?: number[][]
   ) => {
-
-    const clFromChainBusAddress = chainInfo[fromChain]
+    const clFromChainBusAddress = chainInfo[fromChain];
     if (!clFromChainBusAddress) {
-      return E.fail(new CelerError(`chain id not found: ${fromChain}`))
+      throw new FeestimiError(`chain id not found`, { context: { fromChain } });
     }
     if (chainInfo[toChain] == undefined) {
-      return E.fail(new CelerError(`chain id not found: ${toChain}`))
+      throw new FeestimiError(`chain id not found`, { context: { toChain } });
     }
 
     // https://github.com/darwinia-network/darwinia-msgport/blob/2612c1d485a2521530d4246ab31bcc2d13276ae0/contracts/lines/CelerLine.sol#L51-L55
     const message = ethers.utils.solidityPack(
       ["address", "address", "bytes"],
       [fromDappAddress, toDappAddress, payload]
-    )
+    );
 
-    const sgnFee = async (provider: ethers.providers.Provider) => {
-      const celerBus = getCelerBus(provider, clFromChainBusAddress)
-      return BigInt(await celerBus.calcFee(message))
-    }
+    const getSgnFee = async (provider: ethers.providers.Provider) => {
+      try {
+        const celerBus = getCelerBus(provider, clFromChainBusAddress);
+        return BigInt(await celerBus.calcFee(message));
+      } catch (e: any) {
+        const err = ensureError(e);
+        throw new FeestimiError(`Getting estimate gas fee from celer failed`, {
+          cause: err,
+        });
+      }
+    };
 
-    const effectSgnFee = (provider: ethers.providers.Provider) => {
-      return E.tryPromise({
-        try: () => sgnFee(provider),
-        catch: (error) => new CelerError(`${error}`)
-      })
-    }
-
-    const executionFee = async (provider: ethers.providers.Provider) => {
+    const getExecutionFee = async (provider: ethers.providers.Provider) => {
       if (!extraParams) {
-        throw "extraParams is undefined"
+        throw new FeestimiError("extraParams is undefined");
       }
 
       if (extraParams.length < 1) {
-        throw "extraParams.length < 1"
+        throw new FeestimiError("extraParams.length < 1");
       }
 
       if (extraParams[0].length < 2) {
-        throw "extraParams[0].length < 2"
+        throw new FeestimiError("extraParams[0].length < 2", {
+          context: { firstExtraParam: extraParams[0] },
+        });
       }
 
-      const gasPrice = (await provider.getGasPrice()).toBigInt() // tgt gas price
-      const tgtUnits = gasPrice * BigInt(gasLimit)
-      return tgtUnits * BigInt(extraParams[0][0]) / BigInt(extraParams[0][1])
-    }
+      const gasPrice = (await provider.getGasPrice()).toBigInt(); // tgt gas price
+      const tgtUnits = gasPrice * BigInt(gasLimit);
+      return (tgtUnits * BigInt(extraParams[0][0])) / BigInt(extraParams[0][1]);
+    };
 
-    const effectExecutionFee = (provider: ethers.providers.Provider) => {
-      return E.tryPromise({
-        try: () => executionFee(provider),
-        catch: (error) => new CelerError(`${error}`)
-      })
-    }
-
-    return E.Do.pipe(
-      E.bind('srcProvider', () => effectGetProvider(fromChain)),
-      E.bind('tgtProvider', () => effectGetProvider(toChain)),
-      E.bind('sgnFee', ({ srcProvider }) => effectSgnFee(srcProvider)),
-      E.bind('executionFee', ({ tgtProvider }) => effectExecutionFee(tgtProvider)),
-      E.map(({ sgnFee, executionFee }) => (executionFee + sgnFee).toString())
-    )
-  }
+    const srcProvider = await getProvider(fromChain);
+    const tgtProvider = await getProvider(toChain);
+    const sgnFee = await getSgnFee(srcProvider);
+    const executionFee = await getExecutionFee(tgtProvider);
+    return (sgnFee + executionFee).toString();
+  };
 
   return estimateFee;
-}
+};
 
 export default buildEstimateFee;
