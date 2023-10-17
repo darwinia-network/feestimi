@@ -42,7 +42,7 @@ app.use((req, res, next) => {
  * from_address: string
  * to_address: string
  */
-app.get("/:platform/estimate_fee", async (req: Request, res: Response) => {
+app.get("/:platform/fee", async (req: Request, res: Response) => {
   const platform = req.params.platform;
 
   ////////////////////
