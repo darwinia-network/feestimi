@@ -9,6 +9,13 @@
 
 ## API
 
+### API-Key
+
+To access the API, you need to provide a valid API-Key in the request header.
+```
+curl --header 'API-Key: xxx...' ...
+```
+
 ### ORMP  
 
 ```
