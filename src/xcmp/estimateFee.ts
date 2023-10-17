@@ -84,7 +84,7 @@ const buildEstimateFee = () => {
     const api = await getSubstrateApi(toChainId);
     const extrinsic = await createExtrinsic(provider, api);
     const sourceUnits = calcSourceUnits(extrinsic.paymentInfo);
-    return sourceUnits.toString();
+    return [sourceUnits.toString(), '0x'];
   };
 
   return estimateFee;

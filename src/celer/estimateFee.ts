@@ -78,7 +78,7 @@ const buildEstimateFee = () => {
     const tgtProvider = await getProvider(toChain);
     const sgnFee = await getSgnFee(srcProvider);
     const executionFee = await getExecutionFee(tgtProvider);
-    return (sgnFee + executionFee).toString();
+    return [(sgnFee + executionFee).toString(), '0x'];
   };
 
   return estimateFee;

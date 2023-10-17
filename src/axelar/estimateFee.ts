@@ -41,7 +41,7 @@ const buildEstimateFee = (): IEstimateFee => {
       gasLimit
     );
 
-    return result as string;
+    return [result as string, '0x'];
   };
 
   return estimateFee;

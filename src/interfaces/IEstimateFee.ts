@@ -6,6 +6,6 @@ type IEstimateFee = (
   fromDappAddress: string,
   toDappAddress: string,
   extraParams: any[]
-) => Promise<string>;
+) => Promise<[string, string]>;
 
 export { IEstimateFee };

@@ -1,18 +1,38 @@
-// https://khalilstemmler.com/blogs/typescript/node-starter-project/
 import express, { Express, Request, Response } from "express";
 import { IEstimateFee } from "./interfaces/IEstimateFee";
-import { FeestimiError, ensureError } from "./errors";
+import { ensureError } from "./errors";
+require('dotenv').config({ silent: true })
 
 ////////////////////////////////////////////
 // Server
 ////////////////////////////////////////////
 const app: Express = express();
 const host = "0.0.0.0";
-const port = 3389;
+if (!process.env.PORT) {
+  throw new Error("PORT is not set")
+}
+const port = parseInt(process.env.PORT);
+
+// enable CORS for all routes and for our specific API-Key header
+app.use(function(req, res, next) {
+  res.header('Access-Control-Allow-Origin', '*')
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, API-Key')
+  next()
+})
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Hello, Darwinia");
 });
+
+// PROTECT ALL ROUTES THAT FOLLOW
+app.use((req, res, next) => {
+  const apiKey = req.get('API-Key')
+  if (!apiKey || apiKey !== process.env.API_KEY) {
+    res.status(401).json({ code: 1, error: 'unauthorised' })
+  } else {
+    next()
+  }
+})
 
 /**
  * from_chain_id: string
@@ -37,10 +57,10 @@ app.get("/:platform/estimate_fee", async (req: Request, res: Response) => {
   const extra: string = req.query.extra as string; // extra=[[1, 10]]
   console.log(`platform: ${platform}, extra: ${extra}`);
   console.log(
-    `fromChain: ${fromChainId}, toChain: ${toChainId}, gasLimit: ${gasLimit})`
+    `fromChain: ${fromChainId}, toChain: ${toChainId}, gasLimit: ${gasLimit}`
   );
   console.log(
-    `payload: ${payload}, fromAddress: ${fromAddress}, toAddress: ${toAddress})`
+    `payload: ${payload}, fromAddress: ${fromAddress}, toAddress: ${toAddress}`
   );
   if (
     !fromChainId ||
@@ -48,13 +68,12 @@ app.get("/:platform/estimate_fee", async (req: Request, res: Response) => {
     !gasLimit ||
     !payload ||
     !fromAddress ||
-    !toAddress ||
-    !extra
+    !toAddress
   ) {
     errorWith(
       res,
       1,
-      `'from_chain_id', 'to_chain_id', 'gas_limit', 'payload', 'from_address', 'to_address' and 'extra' are required`
+      `'from_chain_id', 'to_chain_id', 'gas_limit', 'payload', 'from_address', 'to_address' are required`
     );
     return;
   }
@@ -87,100 +106,14 @@ app.get("/:platform/estimate_fee", async (req: Request, res: Response) => {
   }
 });
 
-// app.get("/estimate_fees", (req: Request, res: Response) => {
-//   ////////////////////
-//   // Request Params
-//   ////////////////////
-//   const fromChainId = req.query.from_chain_id as string;
-//   const toChainId = req.query.to_chain_id as string;
-//   const gasLimit = req.query.gas_limit as string;
-//   const payload: string = req.query.payload as string;
-//   const fromAddress: string = req.query.from_address as string;
-//   const toAddress: string = req.query.to_address as string;
-//   const extra: string = req.query.extra as string; // extra=[[1, 10]]
-//   console.log(
-//     `fromChain: ${fromChainId}, toChain: ${toChainId}, gasLimit: ${gasLimit})`
-//   );
-//   console.log(
-//     `payload: ${payload}, fromAddress: ${fromAddress}, toAddress: ${toAddress})`
-//   );
-//   if (
-//     !fromChainId ||
-//     !toChainId ||
-//     !gasLimit ||
-//     !payload ||
-//     !fromAddress ||
-//     !toAddress ||
-//     !extra
-//   ) {
-//     errorWith(
-//       res,
-//       1,
-//       `'from_chain_id', 'to_chain_id', 'gas_limit', 'payload', 'from_address', 'to_address' and 'extra' is required`
-//     );
-//     return;
-//   }
-
-//   const [ ] = checkParams(
-//       fromChainId,
-//       toChainId,
-//       gasLimit,
-//       fromAddress,
-//       toAddress,
-//       extra
-//     ),
-//     Effect.flatMap((params) =>
-//       Effect.all(
-//         [
-//           lzEstimateFee(
-//             params.fromChainIdInt,
-//             params.toChainIdInt,
-//             params.gasLimitInt,
-//             payload,
-//             fromAddress,
-//             toAddress,
-//             params.extraParams
-//           ),
-//           axEstimateFee(
-//             params.fromChainIdInt,
-//             params.toChainIdInt,
-//             params.gasLimitInt,
-//             payload,
-//             fromAddress,
-//             toAddress,
-//             params.extraParams
-//           ),
-//           celerEstimateFee(
-//             params.fromChainIdInt,
-//             params.toChainIdInt,
-//             params.gasLimitInt,
-//             payload,
-//             fromAddress,
-//             toAddress,
-//             params.extraParams
-//           ),
-//         ],
-//         { concurrency: "inherit" }
-//       )
-//     ),
-//     Effect.map((result) =>
-//       ok(res, {
-//         layerzero: result[0],
-//         axelar: result[1],
-//         celer: result[2],
-//       })
-//     )
-//   );
-
-//   Effect.runPromise(estimateFees).catch((e) => errorWith(res, 1, e.message));
-// });
-
 function getEstimateFeeFunction(platform: string) {
   try {
+
     const result: {
       default: () => IEstimateFee;
     } = require(`./${platform}/estimateFee`);
     const buildEstimateFee = result.default;
+
     return buildEstimateFee();
   } catch (e) {
     throw new Error(`Unsupported platform: ${platform}`);
@@ -199,6 +132,7 @@ async function estimateFee(
 ) {
   try {
     const estimateFee = getEstimateFeeFunction(platform);
+
     return await estimateFee(
       fromChainId,
       toChainId,
@@ -244,8 +178,12 @@ function checkParams(
 
 function parseExtraParams(extra: string) {
   try {
-    const extraParams: any[] = JSON.parse(extra);
-    return extraParams;
+    if (extra) {
+      const extraParams: any[] = JSON.parse(extra);
+      return extraParams;
+    } else {
+      return []
+    }
   } catch (e: any) {
     console.error(e.message);
     return [];

@@ -30,14 +30,16 @@ const buildEstimateFee = () => {
     );
 
     try {
+      const paramsStr = adapterParamsV1(gasLimit);
       const result = await lzEndpoint.estimateFees(
         toChainInfo.lzChainId,
         fromAddress,
         payload,
         false,
-        adapterParamsV1(gasLimit)
+        paramsStr
       );
-      return result.nativeFee.toString();
+
+      return [result.nativeFee.toString(), paramsStr]
     } catch (e: any) {
       const err = ensureError(e);
       throw new FeestimiError(
