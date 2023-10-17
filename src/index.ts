@@ -42,8 +42,8 @@ app.use((req, res, next) => {
  * from_address: string
  * to_address: string
  */
-app.get("/:platform/fee", async (req: Request, res: Response) => {
-  const platform = req.params.platform;
+app.get("/:protocol/fee", async (req: Request, res: Response) => {
+  const protocol = req.params.protocol;
 
   ////////////////////
   // Request Params
@@ -55,7 +55,7 @@ app.get("/:platform/fee", async (req: Request, res: Response) => {
   const fromAddress: string = req.query.from_address as string;
   const toAddress: string = req.query.to_address as string;
   const extra: string = req.query.extra as string; // extra=[[1, 10]]
-  console.log(`platform: ${platform}, extra: ${extra}`);
+  console.log(`protocol: ${protocol}, extra: ${extra}`);
   console.log(
     `fromChain: ${fromChainId}, toChain: ${toChainId}, gasLimit: ${gasLimit}`
   );
@@ -91,7 +91,7 @@ app.get("/:platform/fee", async (req: Request, res: Response) => {
       extra
     );
     const result = await estimateFee(
-      platform,
+      protocol,
       params.fromChainIdInt,
       params.toChainIdInt,
       params.gasLimitInt,
@@ -100,28 +100,28 @@ app.get("/:platform/fee", async (req: Request, res: Response) => {
       params.toAddress,
       params.extraParams
     );
-    ok(res, result);
+    ok(res, { fee: result[0], params: result[1] });
   } catch (e: any) {
     errorWith(res, 1, e);
   }
 });
 
-function getEstimateFeeFunction(platform: string) {
+function getEstimateFeeFunction(protocol: string) {
   try {
 
     const result: {
       default: () => IEstimateFee;
-    } = require(`./${platform}/estimateFee`);
+    } = require(`./${protocol}/estimateFee`);
     const buildEstimateFee = result.default;
 
     return buildEstimateFee();
   } catch (e) {
-    throw new Error(`Unsupported platform: ${platform}`);
+    throw new Error(`Unsupported protocol: ${protocol}`);
   }
 }
 
 async function estimateFee(
-  platform: string,
+  protocol: string,
   fromChainId: number,
   toChainId: number,
   gasLimit: number,
@@ -131,7 +131,7 @@ async function estimateFee(
   extraParams: any
 ) {
   try {
-    const estimateFee = getEstimateFeeFunction(platform);
+    const estimateFee = getEstimateFeeFunction(protocol);
 
     return await estimateFee(
       fromChainId,
