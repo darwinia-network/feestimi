@@ -1,40 +1,43 @@
-# feestimi
-
-issue for the [spec](https://github.com/darwinia-network/darwinia-msgport/issues/66).
+# Darwinia Msgport API
 
 ## Run for dev
 
 0. clone this repo to your local.
-1. `npm install`
+1. `yarn install`
 2. create and config your local `.env` file.
-3. `npm run start:dev`
+3. `yarn run start:dev`
 
 ## API
 
-- /:platform/estimate_fee
-  ```bash
-  curl 'http://localhost:3389/layerzero/estimate_fee?from_chain_id=97&to_chain_id=1287&gas_limit=300000&payload=0x12345678'
-  curl 'http://localhost:3389/axelar/estimate_fee?from_chain_id=97&to_chain_id=1287&gas_limit=300000'
-  curl 'http://localhost:3389/axelar-testnet/estimate_fee?from_chain_id=97&to_chain_id=1287&gas_limit=300000'
-  curl 'http://localhost:3389/celer/estimate_fee?from_chain_id=97&to_chain_id=81&gas_limit=300000&payload=0x12345678&from_address=0xf5C6825015280CdfD0b56903F9F8B5A2233476F5&to_address=0xf5C6825015280CdfD0b56903F9F8B5A2233476F5&extra=[[10, 1]]'
-  ```
-  Note 1: extra is an optional array for messaging layer specific params.  
-  Note 2: celer is for test only. It has an extra param '[10, 1]' which is the src token price and dst token price ratio.
+### ORMP  
+
+```
+/ormp/fee?from_chain_id=421613&to_chain_id=43&gas_limit=300000&payload=0x12345678&to_address=0xf5C6825015280CdfD0b56903F9F8B5A2233476F5&from_address=0xf5C6825015280CdfD0b56903F9F8B5A2233476F5
+```
+
+* **from_chain_id**: evm chain id
+* **from_address**: source dapp address
+* **to_chain_id**: evm chain id
+* **to_address**: target dapp address
+* **payload**: message payload
+* **gas_limit**: gas_limit of payload on target chain
 
 ## RESULT
 
 ```json
 {
   "code": 0,
-  "data": "1239546427527472"
+  "data": [
+    "1000083726784000",
+    "0x00000000000000000000000000000000000000000000000000000000000493e0"
+  ]
 }
 ```
 
-Native gas tokens in wei
+* the first item is the fee in native token(in wei).  
+* the second item is the `params string` which can be used as the last param in `msgport._send` contract function.
 
 ## ERRORs
-
-FeestimiError
 
 ```json
 {
@@ -43,43 +46,7 @@ FeestimiError
 }
 ```
 
-MessagingLayerError
-
-```json
-{
-  "code": 2,
-  "message": "..."
-}
-```
-
 ## TODOs
 
 - [x] rpc url validation and correction checking.
-- [ ] cache result for several minutes for better performance.
-- [ ] axelar chain id automation.
-
-## effect-ts?
-
-Just try it for fun.
-
-## msgport message estimate fee
-
-```typescript
-// [10, 1] means 10 source units = 1 target units
-// [1, 10] means 1 source unit = 10 target units
-type SrcUnits = number
-type DstUnits = number
-type PriceRatio = [SrcUnits, DstUnits]
-msgport.estimateFee(fromChainId, toChainId, gasLimit, message, priceRatio: PriceRatio) {
-  // now
-  messageLayer.estimateFee(
-    fromChainId,
-    toChainId,
-    gasLimitForMsgport + gasLimit,
-    wrap(message),
-    fromMessageLineAddress,
-    toMessageLineAddress,
-    priceRatio
-  )
-}
-```
+- [ ] cache result for a while for better performance.
