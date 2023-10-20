@@ -24,15 +24,15 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Hello, Darwinia");
 });
 
-// PROTECT ALL ROUTES THAT FOLLOW
-app.use((req, res, next) => {
-  const apiKey = req.get('API-Key')
-  if (!apiKey || apiKey !== process.env.API_KEY) {
-    res.status(401).json({ code: 1, error: 'unauthorised' })
-  } else {
-    next()
-  }
-})
+// // PROTECT ALL ROUTES THAT FOLLOW
+// app.use((req, res, next) => {
+//   const apiKey = req.get('API-Key')
+//   if (!apiKey || apiKey !== process.env.API_KEY) {
+//     res.status(401).json({ code: 1, error: 'unauthorised' })
+//   } else {
+//     next()
+//   }
+// })
 
 /**
  * from_chain_id: string
