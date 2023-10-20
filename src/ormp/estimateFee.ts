@@ -4,8 +4,8 @@ import { FeestimiError } from "../errors";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
 
 const ormpEndpointAddresses: { [key: number]: string } = {
-  421613: "0x0000000000BD9dcFDa5C60697039E2b3B28b079b",
-  43: "0x0000000000BD9dcFDa5C60697039E2b3B28b079b",
+  421614: "0x0034607daf9c1dc6628f6e09E81bB232B6603A89",
+  44: "0x0034607daf9c1dc6628f6e09E81bB232B6603A89",
 };
 const OrmpEndpointAbi = [
   "function fee(uint256 toChainId, address toUA, bytes calldata encoded, bytes calldata params) external view returns (uint256)"
