@@ -1,16 +1,25 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "module": "commonjs",
+    "target": "es2022",
     "lib": [
-      "es6"
+      "es2022"
     ],
-    "allowJs": true,
-    "outDir": "build",
+    "module": "commonjs",
     "rootDir": "src",
-    "strict": true,
+    "declaration": true,
+    "declarationMap": true,
+    "outDir": "dist",
+    "declarationDir": "dist",
     "esModuleInterop": true,
-    "resolveJsonModule": true,
-    "exactOptionalPropertyTypes": true
-  }
+    "forceConsistentCasingInFileNames": true,
+    "strict": false,
+    "skipLibCheck": true
+  },
+  "exclude": [
+    "__tests__",
+    "node_modules",
+    "build",
+    "dist",
+    "target"
+  ]
 }

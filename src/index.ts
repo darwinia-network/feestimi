@@ -8,19 +8,16 @@ require('dotenv').config({ silent: true })
 ////////////////////////////////////////////
 const app: Express = express();
 const host = "0.0.0.0";
-if (!process.env.PORT) {
-  throw new Error("PORT is not set")
-}
-const port = parseInt(process.env.PORT);
+const port = parseInt(process.env.PORT ?? '3389');
 
 // enable CORS for all routes and for our specific API-Key header
-app.use(function(req, res, next) {
+app.use((_req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*')
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, API-Key')
   next()
 })
 
-app.get("/", (req: Request, res: Response) => {
+app.get("/", (_req: Request, res: Response) => {
   res.send("Hello, Darwinia");
 });
 

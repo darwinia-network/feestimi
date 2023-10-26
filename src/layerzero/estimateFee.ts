@@ -1,4 +1,4 @@
-import { Contract, ethers } from "ethers";
+import { ethers } from "ethers";
 import { getLzChainInfo } from "./lzChainInfo";
 import { getContract } from "../chainsUtils";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
