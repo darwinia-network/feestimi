@@ -103,15 +103,10 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
   }
 });
 
-function getEstimateFeeFunction(protocol: string) {
+async function getEstimateFeeFunction(protocol: string) {
   try {
-
-    const result: {
-      default: () => IEstimateFee;
-    } = require(`./${protocol}/estimateFee`);
-    const buildEstimateFee = result.default;
-
-    return buildEstimateFee();
+    const buildEstimateFee = await import(`./${protocol}/estimateFee`)
+    return buildEstimateFee.default();
   } catch (e) {
     throw new Error(`Unsupported protocol: ${protocol}`);
   }
@@ -128,7 +123,7 @@ async function estimateFee(
   extraParams: any
 ) {
   try {
-    const estimateFee = getEstimateFeeFunction(protocol);
+    const estimateFee = await getEstimateFeeFunction(protocol);
 
     return await estimateFee(
       fromChainId,
