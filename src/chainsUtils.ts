@@ -4,11 +4,11 @@
  * @see https://chainid.network/chains_mini.json
  */
 
-import * as chains from "./chains_mini.json";
 import "dotenv/config";
 import { getChainId } from "./jsonRpcUtils";
 import { ethers } from "ethers";
 import { FeestimiError } from "./errors";
+const chains = require('./chains_mini.json')
 
 const chainMapping: { [key: number]: object } = {};
 

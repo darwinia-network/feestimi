@@ -1,4 +1,4 @@
-type IEstimateFee = (
+export type IEstimateFee = (
   fromChainId: number,
   toChainId: number,
   gasLimit: number,
@@ -8,4 +8,3 @@ type IEstimateFee = (
   extraParams: any[]
 ) => Promise<[string, string]>;
 
-export { IEstimateFee };
