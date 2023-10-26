@@ -8,7 +8,7 @@ import "dotenv/config";
 import { getChainId } from "./jsonRpcUtils";
 import { ethers } from "ethers";
 import { FeestimiError } from "./errors";
-const chains = require('./chains_mini.json')
+import chains from "./chains_mini.json";
 
 const chainMapping: { [key: number]: object } = {};
 
