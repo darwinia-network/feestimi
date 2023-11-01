@@ -18,7 +18,8 @@ const buildEstimateFee = () => {
     gasLimit,
     payload,
     fromDappAddress,
-    toDappAddress
+    toDappAddress,
+    refundAddress
   ) => {
     const ormpFromEndpointAddress = ormpEndpointAddresses[fromChainId];
     if (!ormpFromEndpointAddress) {
@@ -45,7 +46,7 @@ const buildEstimateFee = () => {
       ormpFromEndpointAddress
     );
 
-    const paramsStr = params(gasLimit);
+    const paramsStr = params(gasLimit, refundAddress)
     const ormpFee = await endpoint.fee(
       toChainId,
       toDappAddress,
@@ -67,8 +68,8 @@ function fullPayload(fromDappAddress: string, toDappAddress: string, payload: st
   ).slice(2);
 }
 
-function params(gasLimit: number) {
-  return ethers.utils.solidityPack(["uint256"], [gasLimit]);
+function params(gasLimit: number, refundAddress: string) {
+  return ethers.utils.solidityPack(["uint256", "address"], [gasLimit, refundAddress])
 }
 
 export default buildEstimateFee;

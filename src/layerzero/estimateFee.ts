@@ -13,7 +13,9 @@ const buildEstimateFee = () => {
     toChain,
     gasLimit,
     payload,
-    fromDappAddress
+    fromDappAddress,
+    _toDappAddress,
+    _fundAddress
   ) => {
     const fromAddress =
       fromDappAddress == undefined

@@ -38,6 +38,7 @@ app.get("/", (_req: Request, res: Response) => {
  * payload: string
  * from_address: string
  * to_address: string
+ * refund_address: string
  */
 app.get("/:protocol/fee", async (req: Request, res: Response) => {
   const protocol = req.params.protocol;
@@ -51,10 +52,11 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
   const payload: string = req.query.payload as string;
   const fromAddress: string = req.query.from_address as string;
   const toAddress: string = req.query.to_address as string;
+  const refundAddress: string = req.query.refund_address as string;
   const extra: string = req.query.extra as string; // extra=[[1, 10]]
   console.log(`protocol: ${protocol}, extra: ${extra}`);
   console.log(
-    `fromChain: ${fromChainId}, toChain: ${toChainId}, gasLimit: ${gasLimit}`
+    `fromChain: ${fromChainId}, toChain: ${toChainId}, gasLimit: ${gasLimit}, refundAddress: ${refundAddress}`
   );
   console.log(
     `payload: ${payload}, fromAddress: ${fromAddress}, toAddress: ${toAddress}`
@@ -65,12 +67,13 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
     !gasLimit ||
     !payload ||
     !fromAddress ||
-    !toAddress
+    !toAddress ||
+    !refundAddress
   ) {
     errorWith(
       res,
       1,
-      `'from_chain_id', 'to_chain_id', 'gas_limit', 'payload', 'from_address', 'to_address' are required`
+      `'from_chain_id', 'to_chain_id', 'gas_limit', 'payload', 'from_address', 'to_address', 'refundAddress' are required`
     );
     return;
   }
@@ -85,6 +88,7 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
       gasLimit,
       fromAddress,
       toAddress,
+      refundAddress,
       extra
     );
     const result = await estimateFee(
@@ -95,6 +99,7 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
       payload,
       params.fromAddress,
       params.toAddress,
+      params.refundAddress,
       params.extraParams
     );
     ok(res, { fee: result[0], params: result[1] });
@@ -120,6 +125,7 @@ async function estimateFee(
   payload: string,
   fromAddress: string,
   toAddress: string,
+  refundAddress: string,
   extraParams: any
 ) {
   try {
@@ -132,6 +138,7 @@ async function estimateFee(
       payload,
       fromAddress,
       toAddress,
+      refundAddress,
       extraParams
     );
   } catch (e) {
@@ -147,6 +154,7 @@ function checkParams(
   gasLimit: string,
   fromAddress: string,
   toAddress: string,
+  refundAddress: string,
   extra: any
 ) {
   try {
@@ -161,6 +169,7 @@ function checkParams(
       gasLimitInt,
       fromAddress,
       toAddress,
+      refundAddress,
       extraParams,
     };
   } catch (e) {

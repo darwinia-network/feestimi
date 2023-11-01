@@ -31,7 +31,16 @@ const buildEstimateFee = (): IEstimateFee => {
     }
   };
 
-  const estimateFee: IEstimateFee = async (fromChain, toChain, gasLimit) => {
+  const estimateFee: IEstimateFee = async (
+    fromChain,
+    toChain,
+    gasLimit,
+    _payload,
+    _fromDappAddress,
+    _toDappAddress,
+    _fundAddress
+
+  ) => {
     const fromChainInfo = getChainInfo(fromChain);
     const toChainInfo = getChainInfo(toChain);
     checkSameEnvironment(fromChainInfo, toChainInfo);

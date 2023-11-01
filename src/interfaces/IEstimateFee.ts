@@ -5,6 +5,7 @@ export type IEstimateFee = (
   pack: string,
   fromDappAddress: string,
   toDappAddress: string,
-  extraParams: any[]
+  refundAddress: string,
+  extraParams?: any[]
 ) => Promise<[string, string]>;
 
