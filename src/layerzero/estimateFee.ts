@@ -11,11 +11,11 @@ const buildEstimateFee = () => {
   const estimateFee: IEstimateFee = async (
     fromChain,
     toChain,
-    gasLimit,
     payload,
     fromDappAddress,
     _toDappAddress,
-    _fundAddress
+    _fundAddress,
+    gasLimit,
   ) => {
     const fromAddress =
       fromDappAddress == undefined

@@ -30,19 +30,17 @@ const buildEstimateFee = (): IEstimateFee => {
       });
     }
   };
-
   const estimateFee: IEstimateFee = async (
-    fromChain,
-    toChain,
-    gasLimit,
+    fromChainId,
+    toChainId,
     _payload,
     _fromDappAddress,
     _toDappAddress,
-    _fundAddress
-
+    _fundAddress,
+    gasLimit,
   ) => {
-    const fromChainInfo = getChainInfo(fromChain);
-    const toChainInfo = getChainInfo(toChain);
+    const fromChainInfo = getChainInfo(fromChainId);
+    const toChainInfo = getChainInfo(toChainId);
     checkSameEnvironment(fromChainInfo, toChainInfo);
     const result = await axelarEstimateGasFee(
       fromChainInfo,

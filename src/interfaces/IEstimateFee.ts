@@ -1,11 +1,13 @@
+type Fee = string
+type AbiEncodedParams = string
+
 export type IEstimateFee = (
   fromChainId: number,
   toChainId: number,
-  gasLimit: number,
-  pack: string,
-  fromDappAddress: string,
-  toDappAddress: string,
-  refundAddress: string,
-  extraParams?: any[]
-) => Promise<[string, string]>;
-
+  payload: string, // the message payload sent to msgport by the source dapp
+  fromUAAddress?: string,
+  toUAAddress?: string,
+  refundAddress?: string,
+  gasLimit?: number,
+  extraParams?: any
+) => Promise<[Fee, AbiEncodedParams]>;

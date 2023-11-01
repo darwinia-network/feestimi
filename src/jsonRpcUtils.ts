@@ -16,7 +16,7 @@ class JSONRPCError extends Error {
 }
 
 // get chain id from ethereum rpc api
-async function getChainId(rpcUrl: string) {
+async function eth_chainId(rpcUrl: string) {
   try {
     const response = await axios.post(
       rpcUrl,
@@ -47,4 +47,34 @@ async function getChainId(rpcUrl: string) {
   }
 }
 
-export { getChainId, AxiosError, JSONRPCError };
+async function eth_estimateGas(rpcUrl: string, tx: any) {
+  try {
+    const response = await axios.post(
+      rpcUrl,
+      {
+        jsonrpc: "2.0",
+        id: +new Date(),
+        method: "eth_estimateGas",
+        params: [tx],
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
+    );
+    if (response.data.error) {
+      throw new JSONRPCError(response.data.error.message);
+    }
+    return Number(response.data.result);
+  } catch (error: any) {
+    if (error instanceof JSONRPCError) {
+      throw error;
+    } else {
+      throw new AxiosError(error.message);
+    }
+  }
+}
+
+export { eth_chainId, eth_estimateGas, AxiosError, JSONRPCError };

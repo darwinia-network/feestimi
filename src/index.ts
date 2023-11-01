@@ -64,7 +64,6 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
   if (
     !fromChainId ||
     !toChainId ||
-    !gasLimit ||
     !payload ||
     !fromAddress ||
     !toAddress ||
@@ -73,7 +72,7 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
     errorWith(
       res,
       1,
-      `'from_chain_id', 'to_chain_id', 'gas_limit', 'payload', 'from_address', 'to_address', 'refundAddress' are required`
+      `'from_chain_id', 'to_chain_id', 'payload', 'from_address', 'to_address', 'refundAddress' are required`
     );
     return;
   }
@@ -130,15 +129,14 @@ async function estimateFee(
 ) {
   try {
     const estimateFee = await getEstimateFeeFunction(protocol);
-
     return await estimateFee(
       fromChainId,
       toChainId,
-      gasLimit,
       payload,
       fromAddress,
       toAddress,
       refundAddress,
+      gasLimit,
       extraParams
     );
   } catch (e) {

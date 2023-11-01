@@ -5,7 +5,7 @@
  */
 
 import "dotenv/config";
-import { getChainId } from "./jsonRpcUtils";
+import { eth_chainId, eth_estimateGas } from "./jsonRpcUtils";
 import { ethers } from "ethers";
 import { FeestimiError } from "./errors";
 import chains from "./chains_mini.json";
@@ -55,6 +55,15 @@ async function getRpcUrl(chainId: number): Promise<string | null> {
   return finalRpcUrl;
 }
 
+async function estimateGas(chainId: number, from: string, to: string, data: string) {
+  const url = await getRpcUrl(chainId);
+  return await eth_estimateGas(url, {
+    from: from,
+    to: to,
+    data: data,
+  })
+}
+
 async function getWsRpcUrl(chainId: number): Promise<string | null> {
   const chain: { [key: string]: any } = chainMapping[chainId];
   if (!chain) {
@@ -91,7 +100,7 @@ async function getWsRpcUrl(chainId: number): Promise<string | null> {
 // check if rpc is alive by using etherjs
 async function isAliveAndCorrect(rpcUrl: string, chainId: number) {
   try {
-    const chainIdFromRpc = await getChainId(rpcUrl);
+    const chainIdFromRpc = await eth_chainId(rpcUrl);
     if (chainIdFromRpc === chainId) {
       return true;
     }
@@ -145,4 +154,5 @@ export {
   getProvider,
   getContract,
   getSubstrateApi,
+  estimateGas,
 };

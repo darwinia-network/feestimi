@@ -1,65 +1,73 @@
 import { ethers } from "ethers";
-import { getContract } from "../chainsUtils";
+import { getContract, estimateGas } from "../chainsUtils";
 import { FeestimiError } from "../errors";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
+import { ormpLineAddresses, ormpAddresses } from "./addresses";
 
-const ormpEndpointAddresses: { [key: number]: string } = {
-  421614: "0x0034607daf9c1dc6628f6e09E81bB232B6603A89",
-  44: "0x0034607daf9c1dc6628f6e09E81bB232B6603A89",
-};
-const OrmpEndpointAbi = [
-  "function fee(uint256 toChainId, address toUA, bytes calldata encoded, bytes calldata params) external view returns (uint256)"
+const srcOrmpLineAbi = [
+  "function fee(uint256 toChainId, address toDapp, bytes calldata message, bytes calldata params) external view returns (uint256)"
 ];
 
 const buildEstimateFee = () => {
   const estimateFee: IEstimateFee = async (
     fromChainId,
     toChainId,
-    gasLimit,
     payload,
-    fromDappAddress,
-    toDappAddress,
-    refundAddress
+    fromUAAddress,
+    toUAAddress,
+    refundAddress,
+    gasLimit,
   ) => {
-    const ormpFromEndpointAddress = ormpEndpointAddresses[fromChainId];
-    if (!ormpFromEndpointAddress) {
-      throw new FeestimiError(`ormpFromEndpointAddress not found`, {
+    const srcOrmpLineAddress = ormpLineAddresses[fromChainId];
+    if (!srcOrmpLineAddress) {
+      throw new FeestimiError(`srcOrmpLineAddress not found`, {
         context: { fromChainId },
       });
     }
-    if (!toDappAddress) {
-      throw new FeestimiError(`toDappAddress not found`, {
+    if (!toUAAddress) {
+      throw new FeestimiError(`toUAAddress not found`, {
         context: { toChainId },
       });
     }
     console.log(
-      `Layerzero estimate fee fromChain: ${fromChainId}, toChain: ${toChainId}`
+      `fromChain: ${fromChainId}, toChain: ${toChainId}`
     );
     console.log(
-      `Layerzero estimate fee fromEndpointAddress: ${ormpFromEndpointAddress}`
+      `srcOrmpLineAddress: ${srcOrmpLineAddress}`
     );
-    console.log(`toDappAddress: ${toDappAddress}`);
+    console.log(`target UA Address: ${toUAAddress}`);
 
-    const endpoint = await getContract(
+    const fullPayload = buildFullPayload(fromUAAddress, toUAAddress, payload);
+    console.log(`fullPayload: ${fullPayload}`);
+    if (!gasLimit) {
+      const tgtOrmpLineAddress = ormpLineAddresses[toChainId];
+      const tgtOrmpAddress = ormpAddresses[toChainId];
+      console.log(`tgtOrmpAddress: ${tgtOrmpAddress}`)
+      console.log(`tgtOrmpLineAddress: ${tgtOrmpLineAddress}`);
+      gasLimit = await estimateGas(toChainId, tgtOrmpAddress, tgtOrmpLineAddress, fullPayload);
+      console.log(`fullPayload(tgtOrmpLineAddress.recv)'s gasLimit estimated: ${gasLimit}`)
+    }
+    const paramsStr = buildParamsStr(gasLimit, refundAddress)
+
+    const ormpLine = await getContract(
       fromChainId,
-      OrmpEndpointAbi,
-      ormpFromEndpointAddress
+      srcOrmpLineAbi,
+      srcOrmpLineAddress
     );
 
-    const paramsStr = params(gasLimit, refundAddress)
-    const ormpFee = await endpoint.fee(
+    const fee = await ormpLine.fee(
       toChainId,
-      toDappAddress,
-      fullPayload(fromDappAddress, toDappAddress, payload),
+      toUAAddress,
+      fullPayload,
       paramsStr
     );
-    return [ormpFee.toString(), paramsStr]
+    return [fee.toString(), paramsStr]
   };
 
   return estimateFee;
 };
 
-function fullPayload(fromDappAddress: string, toDappAddress: string, payload: string) {
+function buildFullPayload(fromDappAddress: string, toDappAddress: string, payload: string) {
   // https://github.com/darwinia-network/darwinia-msgport/blob/12278bdbe58c2c464ce550a2cf23c8dc9949f741/contracts/lines/ORMPLine.sol#L33
   // bytes memory encoded = abi.encodeWithSelector(ORMPLine.recv.selector, fromDapp, toDapp, message);
   return "0x394d1bca" + ethers.utils.defaultAbiCoder.encode(
@@ -68,8 +76,9 @@ function fullPayload(fromDappAddress: string, toDappAddress: string, payload: st
   ).slice(2);
 }
 
-function params(gasLimit: number, refundAddress: string) {
-  return ethers.utils.solidityPack(["uint256", "address"], [gasLimit, refundAddress])
+function buildParamsStr(gasLimit: number, refundAddress: string) {
+  return ethers.utils.defaultAbiCoder.encode(["uint256", "address", "bytes"], [gasLimit, refundAddress, "0x"])
+  // return ethers.utils.solidityPack(["uint256", "address", "bytes"], [gasLimit, refundAddress, "0x"])
 }
 
 export default buildEstimateFee;
