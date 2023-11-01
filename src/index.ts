@@ -72,7 +72,7 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
     errorWith(
       res,
       1,
-      `'from_chain_id', 'to_chain_id', 'payload', 'from_address', 'to_address', 'refundAddress' are required`
+      `'from_chain_id', 'to_chain_id', 'payload', 'from_address', 'to_address', 'refund_address' are required`
     );
     return;
   }
