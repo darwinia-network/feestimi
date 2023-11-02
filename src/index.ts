@@ -54,13 +54,13 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
   const toAddress: string = req.query.to_address as string;
   const refundAddress: string = req.query.refund_address as string;
   const extra: string = req.query.extra as string; // extra=[[1, 10]]
-  console.log(`protocol: ${protocol}, extra: ${extra}`);
-  console.log(
-    `fromChain: ${fromChainId}, toChain: ${toChainId}, gasLimit: ${gasLimit}, refundAddress: ${refundAddress}`
-  );
-  console.log(
-    `payload: ${payload}, fromAddress: ${fromAddress}, toAddress: ${toAddress}`
-  );
+  console.log(`protocol: ${protocol}`);
+  console.log(`fromChain: ${fromChainId}, toChain: ${toChainId}`);
+  console.log(`fromAddress: ${fromAddress}, toAddress: ${toAddress}`)
+  console.log(`payload: ${payload}`);
+  console.log(`gasLimit: ${gasLimit}`)
+  console.log(`refundAddress: ${refundAddress}`)
+  console.log(`extra: ${extra}`);
   if (
     !fromChainId ||
     !toChainId ||

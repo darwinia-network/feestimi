@@ -18,49 +18,59 @@ const buildEstimateFee = () => {
     refundAddress,
     gasLimit,
   ) => {
+    // PARAMS PREPARATION
     const srcOrmpLineAddress = ormpLineAddresses[fromChainId];
     if (!srcOrmpLineAddress) {
       throw new FeestimiError(`srcOrmpLineAddress not found`, {
         context: { fromChainId },
       });
     }
-    if (!toUAAddress) {
-      throw new FeestimiError(`toUAAddress not found`, {
+    console.log(`srcOrmpLineAddress: ${srcOrmpLineAddress}`);
+
+    const tgtOrmpLineAddress = ormpLineAddresses[toChainId];
+    if (!tgtOrmpLineAddress) {
+      throw new FeestimiError(`tgtOrmpLineAddress not found`, {
         context: { toChainId },
       });
     }
-    console.log(
-      `fromChain: ${fromChainId}, toChain: ${toChainId}`
-    );
-    console.log(
-      `srcOrmpLineAddress: ${srcOrmpLineAddress}`
-    );
-    console.log(`target UA Address: ${toUAAddress}`);
+    console.log(`tgtOrmpLineAddress: ${tgtOrmpLineAddress}`);
 
+    const tgtOrmpAddress = ormpAddresses[toChainId];
+    if (!tgtOrmpAddress) {
+      throw new FeestimiError(`tgtOrmpAddress not found`, {
+        context: { toChainId },
+      });
+    }
+    console.log(`tgtOrmpAddress: ${tgtOrmpAddress}`)
+
+    // BUILD FULL PAYLOAD
     const fullPayload = buildFullPayload(fromUAAddress, toUAAddress, payload);
     console.log(`fullPayload: ${fullPayload}`);
+
+    // GAS ESTIMATION IF NOT PROVIDED
     if (!gasLimit) {
-      const tgtOrmpLineAddress = ormpLineAddresses[toChainId];
-      const tgtOrmpAddress = ormpAddresses[toChainId];
-      console.log(`tgtOrmpAddress: ${tgtOrmpAddress}`)
-      console.log(`tgtOrmpLineAddress: ${tgtOrmpLineAddress}`);
       gasLimit = await estimateGas(toChainId, tgtOrmpAddress, tgtOrmpLineAddress, fullPayload);
-      console.log(`fullPayload(tgtOrmpLineAddress.recv)'s gasLimit estimated: ${gasLimit}`)
+      console.log(`fullPayload gasLimit estimated: ${gasLimit}`)
+      gasLimit = gasLimit * 1.2 + 200000; // add 20% buffer and 200k gas
+      console.log(`fullPayload gasLimit estimated with buffer: ${gasLimit}`)
     }
+
+    // 1. BUILD PARAMS STR FOR UA TO CALL ORMP
     const paramsStr = buildParamsStr(gasLimit, refundAddress)
 
+    // 2. FEE ESTIMATION
     const ormpLine = await getContract(
       fromChainId,
       srcOrmpLineAbi,
       srcOrmpLineAddress
     );
-
     const fee = await ormpLine.fee(
       toChainId,
       toUAAddress,
       fullPayload,
       paramsStr
     );
+
     return [fee.toString(), paramsStr]
   };
 
