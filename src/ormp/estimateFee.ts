@@ -51,7 +51,7 @@ const buildEstimateFee = () => {
     if (!gasLimit) {
       gasLimit = await estimateGas(toChainId, tgtOrmpAddress, tgtOrmpLineAddress, fullPayload);
       console.log(`fullPayload gasLimit estimated: ${gasLimit}`)
-      gasLimit = gasLimit * 1.2 + 200000; // add 20% buffer and 200k gas
+      gasLimit = Math.round(gasLimit * 1.2 + 200000); // add 20% buffer and 200k gas
       console.log(`fullPayload gasLimit estimated with buffer: ${gasLimit}`)
     }
 
