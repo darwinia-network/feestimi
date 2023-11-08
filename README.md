@@ -31,7 +31,8 @@ curl --header 'API-Key: xxx...' ...
 * **to_chain_id**: evm chain id
 * **to_address**: target dapp address
 * **payload**: message payload
-* **gas_limit**: gas_limit of payload on target chain
+* **refund_address**: the refund address provided by msgport's user
+* **gas_limit(optional)**: gas_limit of payload on target chain
 
 ## RESULT
 
