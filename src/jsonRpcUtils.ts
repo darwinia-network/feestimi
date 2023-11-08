@@ -65,7 +65,7 @@ async function eth_estimateGas(rpcUrl: string, tx: any) {
       }
     );
     if (response.data.error) {
-      throw new JSONRPCError(response.data.error.message);
+      throw new JSONRPCError(JSON.stringify(response.data));
     }
     return Number(response.data.result);
   } catch (error: any) {

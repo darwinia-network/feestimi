@@ -88,7 +88,6 @@ function buildFullPayload(fromDappAddress: string, toDappAddress: string, payloa
 
 function buildParamsStr(gasLimit: number, refundAddress: string) {
   return ethers.utils.defaultAbiCoder.encode(["uint256", "address", "bytes"], [gasLimit, refundAddress, "0x"])
-  // return ethers.utils.solidityPack(["uint256", "address", "bytes"], [gasLimit, refundAddress, "0x"])
 }
 
 export default buildEstimateFee;
