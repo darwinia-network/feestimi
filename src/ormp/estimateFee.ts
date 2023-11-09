@@ -67,7 +67,7 @@ const buildEstimateFee = () => {
     const fee = await ormpLine.fee(
       toChainId,
       toUAAddress,
-      fullPayload,
+      payload,
       paramsStr
     );
 
