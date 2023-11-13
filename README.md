@@ -1,8 +1,6 @@
 # Darwinia Msgport API
 
-<img width="800" alt="ormp-fee" src="https://github.com/darwinia-network/darwinia-msgport-api/assets/1608576/c9a7018d-9f02-4d74-9529-8cbfa7034309">
-
-
+<img width="1057" alt="Snipaste_2023-11-13_15-06-14" src="https://github.com/darwinia-network/darwinia-msgport-api/assets/1608576/2d575df9-4298-4a20-baab-b88f5428b439">
 
 ## Run for dev
 
