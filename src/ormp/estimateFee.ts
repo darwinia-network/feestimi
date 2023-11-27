@@ -96,7 +96,7 @@ function buildParamsStr(gasLimit: number, refundAddress: string) {
 }
 
 function isArb(chainId) {
-  return chainId == 42161 || chainId == 421611
+  return chainId == 42161 || chainId == 421614
 }
 
 async function fetchBaseGas(toChainId) {
