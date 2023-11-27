@@ -9,6 +9,7 @@ import { eth_chainId, eth_estimateGas } from "./jsonRpcUtils";
 import { ethers } from "ethers";
 import { FeestimiError } from "./errors";
 import chains from "./chains_mini.json";
+import { jsonRpcUrls } from "./jsonRpcUrls";
 
 const chainMapping: { [key: number]: object } = {};
 
@@ -24,6 +25,13 @@ const ALCHEMY_API_KEY = process.env.ALCHEMY_API_KEY || "";
 const ANKR_API_KEY = process.env.ANKR_API_KEY || "";
 
 async function getRpcUrl(chainId: number): Promise<string | null> {
+  console.log("chainId - " + chainId)
+  var url = jsonRpcUrls[chainId];
+  if (url) {
+    console.log("url from config - " + url)
+    return url;
+  }
+
   const chain: { [key: string]: any } = chainMapping[chainId];
   if (!chain) {
     return null;
@@ -52,6 +60,7 @@ async function getRpcUrl(chainId: number): Promise<string | null> {
     }
   }
 
+  console.log("url from chains_mini - " + finalRpcUrl)
   return finalRpcUrl;
 }
 
