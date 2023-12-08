@@ -2,7 +2,7 @@ import { ethers } from "ethers";
 import { getContract, estimateGas } from "../chainsUtils";
 import { FeestimiError } from "../errors";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
-import { ormpLineAddresses, ormpAddresses } from "./addresses";
+import { ormpExtLineAddresses, ormpAddresses } from "./addresses";
 
 const srcOrmpLineAbi = [
   "function fee(uint256 toChainId, address toDapp, bytes calldata message, bytes calldata params) external view returns (uint256)"
@@ -19,7 +19,7 @@ const buildEstimateFee = () => {
     gasLimit,
   ) => {
     // PARAMS PREPARATION
-    const srcOrmpLineAddress = ormpLineAddresses[fromChainId]
+    const srcOrmpLineAddress = ormpExtLineAddresses[fromChainId]
     if (!srcOrmpLineAddress) {
       throw new FeestimiError(`srcOrmpLineAddress not found`, {
         context: { fromChainId },
@@ -27,7 +27,7 @@ const buildEstimateFee = () => {
     }
     console.log(`srcOrmpLineAddress: ${srcOrmpLineAddress}`);
 
-    const tgtOrmpLineAddress = ormpLineAddresses[toChainId]
+    const tgtOrmpLineAddress = ormpExtLineAddresses[toChainId]
     if (!tgtOrmpLineAddress) {
       throw new FeestimiError(`tgtOrmpLineAddress not found`, {
         context: { toChainId },
