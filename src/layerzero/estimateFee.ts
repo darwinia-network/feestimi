@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { getLzChainInfo } from "./lzChainInfo";
-import { getContract } from "../chainsUtils";
+import { getContract } from "../utils/evmChainsUtils";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
 import { FeestimiError, ensureError } from "../errors";
 

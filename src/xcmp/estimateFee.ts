@@ -1,5 +1,6 @@
 import { IEstimateFee } from "../interfaces/IEstimateFee";
-import { getProvider, getSubstrateApi } from "../chainsUtils";
+import { getProvider } from "../utils/evmChainsUtils";
+import { getSubstrateApi } from "../utils/substrateChainsUtils";
 import { Contract, ethers } from "ethers";
 import { ApiPromise } from "@polkadot/api";
 import { FeestimiError } from "../errors";

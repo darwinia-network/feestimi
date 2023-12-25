@@ -77,4 +77,34 @@ async function eth_estimateGas(rpcUrl: string, tx: any) {
   }
 }
 
-export { eth_chainId, eth_estimateGas, AxiosError, JSONRPCError };
+async function eth_call(rpcUrl: string, params: any) {
+  try {
+    const response = await axios.post(
+      rpcUrl,
+      {
+        jsonrpc: "2.0",
+        id: +new Date(),
+        method: "eth_call",
+        params: [params, "latest"],
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
+    );
+    if (response.data.error) {
+      throw new JSONRPCError(JSON.stringify(response.data));
+    }
+    return Number(response.data.result);
+  } catch (error: any) {
+    if (error instanceof JSONRPCError) {
+      throw error;
+    } else {
+      throw new AxiosError(error.message);
+    }
+  }
+}
+
+export { eth_chainId, eth_estimateGas, eth_call, AxiosError, JSONRPCError };

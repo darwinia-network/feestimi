@@ -1,6 +1,6 @@
 import { ethers } from "ethers";
 import { FeestimiError, ensureError } from "../errors";
-import { getProvider } from "../chainsUtils";
+import { getProvider } from "../utils/evmChainsUtils";
 import { IEstimateFee } from "../interfaces/IEstimateFee";
 import chainInfo from "./chainInfo";
 

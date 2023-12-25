@@ -112,7 +112,8 @@ async function getEstimateFeeFunction(protocol: string) {
     const buildEstimateFee = await import(`./${protocol}/estimateFee`)
     return buildEstimateFee.default();
   } catch (e) {
-    throw new Error(`Unsupported protocol: ${protocol}`);
+    console.log(e);
+    throw new Error(`${protocol} - ${e.message}`);
   }
 }
 
