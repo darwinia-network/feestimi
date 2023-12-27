@@ -52,8 +52,10 @@ async function doEstimateFee(params, config): Promise<[string, string]> {
   if (!gasLimit) {
     gasLimit = await estimateGas(toChainId, tgtOrmpAddress, tgtOrmpLineAddress, fullPayload);
     console.log(`fullPayload gasLimit estimated: ${gasLimit}`)
-    const baseGas = isArb(toChainId) ? (await fetchBaseGas(toChainId)) : 200000;
+
+    const baseGas = isArb(toChainId) ? (await fetchBaseGas(toChainId)) : 0;
     console.log(`baseGas: ${baseGas}`)
+
     gasLimit = Math.round((baseGas + gasLimit) * 1.2);
     console.log(`fullPayload gasLimit estimated with buffer: ${gasLimit}`)
   }
