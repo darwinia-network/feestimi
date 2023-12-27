@@ -1,4 +1,4 @@
-const ormpExtLineAddresses: { [key: number]: string } = {
+const ormpLineAddresses: { [key: number]: string } = {
   44: "0x000000000EFcBAdA3793cC59c62D79b9f56Ae48F",
   11155111: "0x000000000EFcBAdA3793cC59c62D79b9f56Ae48F",
   1: "0x000000000EFcBAdA3793cC59c62D79b9f56Ae48F",
@@ -15,4 +15,4 @@ const ormpAddresses: { [key: number]: string } = {
   1: "0x00000000001523057a05d6293C1e5171eE33eE0A",
 }
 
-export { ormpAddresses, ormpExtLineAddresses }
+export { ormpAddresses, ormpLineAddresses }
