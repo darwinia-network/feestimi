@@ -1,6 +1,6 @@
 import { IEstimateFee } from "../interfaces/IEstimateFee";
 import { doEstimateFee } from "./doEstimateFee";
-import { ormpLineAddresses, ormpAddresses } from "./addresses";
+import { portAddresses, ormpAddresses } from "./addresses";
 
 const buildEstimateFee = () => {
   const estimateFee: IEstimateFee = async (
@@ -22,7 +22,7 @@ const buildEstimateFee = () => {
         refundAddress,
         gasLimit,
       }, {
-        ormpLineAddresses,
+        portAddresses,
         ormpAddresses
       }
     );
