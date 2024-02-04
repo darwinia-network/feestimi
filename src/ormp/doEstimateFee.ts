@@ -15,26 +15,26 @@ async function doEstimateFee(params, config): Promise<[string, string]> {
   const refundAddress = params.refundAddress;
   let gasLimit = params.gasLimit;
 
-  const ormpLineAddresses = config.ormpLineAddresses;
+  const portAddresses = config.portAddresses;
   const ormpAddresses = config.ormpAddresses;
 
   // PARAMS PREPARATION
-  const srcOrmpLineAddress = ormpLineAddresses[fromChainId]
-  console.log(srcOrmpLineAddress)
-  if (!srcOrmpLineAddress) {
-    throw new FeestimiError(`srcOrmpLineAddress not found`, {
+  const srcPortAddress = portAddresses[fromChainId]
+  console.log(srcPortAddress)
+  if (!srcPortAddress) {
+    throw new FeestimiError(`srcPortAddress not found`, {
       context: { fromChainId },
     });
   }
-  console.log(`srcOrmpLineAddress: ${srcOrmpLineAddress}`);
+  console.log(`srcPortAddress: ${srcPortAddress}`);
 
-  const tgtOrmpLineAddress = ormpLineAddresses[toChainId]
-  if (!tgtOrmpLineAddress) {
-    throw new FeestimiError(`tgtOrmpLineAddress not found`, {
+  const tgtPortAddress = portAddresses[toChainId]
+  if (!tgtPortAddress) {
+    throw new FeestimiError(`tgtPortAddress not found`, {
       context: { toChainId },
     });
   }
-  console.log(`tgtOrmpLineAddress: ${tgtOrmpLineAddress}`);
+  console.log(`tgtPortAddress: ${tgtPortAddress}`);
 
   const tgtOrmpAddress = ormpAddresses[toChainId];
   if (!tgtOrmpAddress) {
@@ -45,12 +45,12 @@ async function doEstimateFee(params, config): Promise<[string, string]> {
   console.log(`tgtOrmpAddress: ${tgtOrmpAddress}`)
 
   // BUILD FULL PAYLOAD
-  const fullPayload = buildFullPayload(fromUAAddress, toUAAddress, payload, fromChainId, srcOrmpLineAddress)
+  const fullPayload = buildFullPayload(fromUAAddress, toUAAddress, payload, fromChainId, srcPortAddress)
   console.log(`fullPayload: ${fullPayload}`);
 
   // GAS ESTIMATION IF NOT PROVIDED
   if (!gasLimit) {
-    gasLimit = await estimateGas(toChainId, tgtOrmpAddress, tgtOrmpLineAddress, fullPayload);
+    gasLimit = await estimateGas(toChainId, tgtOrmpAddress, tgtPortAddress, fullPayload);
     console.log(`fullPayload gasLimit estimated: ${gasLimit}`)
 
     const baseGas = isArb(toChainId) ? (await fetchBaseGas(toChainId)) : 0;
@@ -66,7 +66,7 @@ async function doEstimateFee(params, config): Promise<[string, string]> {
   // 2. FEE ESTIMATION
   const fee = await callFunction(
     fromChainId,
-    srcOrmpLineAddress,
+    srcPortAddress,
     srcOrmpLineAbi,
     "fee",
     [
@@ -83,7 +83,7 @@ async function doEstimateFee(params, config): Promise<[string, string]> {
   ];
 }
 
-function buildFullPayload(fromDappAddress: string, toDappAddress: string, payload: string, fromChainId: number, srcOrmpLineAddress: string) {
+function buildFullPayload(fromDappAddress: string, toDappAddress: string, payload: string, fromChainId: number, srcPortAddress: string) {
   // https://github.com/darwinia-network/darwinia-msgport/blob/12278bdbe58c2c464ce550a2cf23c8dc9949f741/contracts/lines/ORMPLine.sol#L33
   // bytes memory encoded = abi.encodeWithSelector(ORMPLine.recv.selector, fromDapp, toDapp, message);
   const recv = "0x394d1bca" + ethers.utils.defaultAbiCoder.encode(
@@ -91,7 +91,7 @@ function buildFullPayload(fromDappAddress: string, toDappAddress: string, payloa
     [fromDappAddress, toDappAddress, payload]
   ).slice(2);
   // + byte32 0 + bytes32 fromChainId  + src ORMPLine address 20
-  return recv + "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF" + toBytes32Hex(fromChainId) + srcOrmpLineAddress.slice(2);
+  return recv + "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF" + toBytes32Hex(fromChainId) + srcPortAddress.slice(2);
 
 }
 
