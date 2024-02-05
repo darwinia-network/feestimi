@@ -7,6 +7,7 @@ const jsonRpcHttpUrls: { [key: number]: string } = {
   11155111: "https://ethereum-sepolia.publicnode.com",
   421614: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
   42161: "https://arbitrum-one.publicnode.com",
+  43: "https://pangolin-rpc.darwinia.network",
   44: "https://crab-rpc.darwinia.network",
   46: "https://rpc.darwinia.network",
   2494104990: "https://api.shasta.trongrid.io/jsonrpc",
