@@ -12,6 +12,7 @@ const jsonRpcHttpUrls: { [key: number]: string } = {
   46: "https://rpc.darwinia.network",
   2494104990: "https://api.shasta.trongrid.io/jsonrpc",
   728126428: "https://api.trongrid.io/jsonrpc",
+  137: "https://polygon-bor-rpc.publicnode.com",
 };
 
 async function estimateGas(chainId: number, from: string, to: string, data: string) {

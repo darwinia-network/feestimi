@@ -6,6 +6,7 @@ const portAddresses: { [key: number]: string } = {
   11155111: "0x0000000005d961F950adA391C1511c92bbc64D9F",
   1: "0x0000000005d961F950adA391C1511c92bbc64D9F",
   43: "0x0000000005d961F950adA391C1511c92bbc64D9F",
+  137: "0x0000000005d961F950adA391C1511c92bbc64D9F",
 };
 
 const ormpAddresses: { [key: number]: string } = {
@@ -16,6 +17,7 @@ const ormpAddresses: { [key: number]: string } = {
   11155111: "0x00000000001523057a05d6293C1e5171eE33eE0A",
   1: "0x00000000001523057a05d6293C1e5171eE33eE0A",
   43: "0x00000000001523057a05d6293C1e5171eE33eE0A",
+  137: "0x00000000001523057a05d6293C1e5171eE33eE0A",
 }
 
 export { portAddresses, ormpAddresses }
