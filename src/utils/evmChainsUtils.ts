@@ -17,7 +17,6 @@ const jsonRpcHttpUrls: { [key: number]: string } = {
 };
 
 async function estimateGas(chainId: number, from: string, to: string, data: string) {
-  console.log("chainId - " + chainId)
   const url = jsonRpcHttpUrls[chainId];
   if (!url) {
     throw new FeestimiError("json rpc url not found");
