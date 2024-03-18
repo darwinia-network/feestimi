@@ -48,7 +48,7 @@ async function doEstimateFee(params, config): Promise<[string, string]> {
   const fullPayload = buildFullPayload(fromUAAddress, toUAAddress, payload, fromChainId, srcPortAddress)
   console.log(`fullPayload: ${fullPayload}`);
 
-  // GET GAS LIMIT FROM TARGET CHAIN IF IT IS NOT PROVIDED
+  // GAS ESTIMATION IF NOT PROVIDED
   if (!gasLimit) {
     gasLimit = await estimateGas(toChainId, tgtOrmpAddress, tgtPortAddress, fullPayload);
     console.log(`fullPayload gasLimit estimated: ${gasLimit}`)
