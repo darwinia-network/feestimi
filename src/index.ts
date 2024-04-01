@@ -10,9 +10,14 @@ console.log = (function() {
   var console_log = console.log;
   
   return function() {
-    var time = "[" + new Date().toUTCString() + "]";
+    const logSubTitle = httpContext.get('logTitle');
+    if (logSubTitle) {
+      var title = "[" + new Date().toUTCString() + "] - [" + logSubTitle + "]";
+    } else {
+      var title = "[" + new Date().toUTCString() + "]";
+    }
     var args = [];
-    args.push(time + ':');
+    args.push(title + ':');
     for(var i = 0; i < arguments.length; i++) {
       args.push(arguments[i]);
     }
@@ -74,15 +79,14 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
   const refundAddress: string = req.query.refund_address as string;
   const extra: string = req.query.extra as string; // extra=[[1, 10]]
 
-  const logTitle = `${protocol}:${fromChainId}>${toChainId}`
-  httpContext.set('logTitle', logTitle)
+  httpContext.set('logTitle', `${protocol}:${fromChainId}>${toChainId}`)
 
-  console.log(`${logTitle} - ==============================================================================================================`);
-  console.log(`${logTitle} - fromAddress: ${fromAddress}, toAddress: ${toAddress}`)
-  console.log(`${logTitle} - payload: ${payload}`);
-  console.log(`${logTitle} - gasLimit: ${gasLimit}`)
-  console.log(`${logTitle} - refundAddress: ${refundAddress}`)
-  console.log(`${logTitle} - extra: ${extra}`);
+  console.log(`==============================================================================================================`);
+  console.log(`fromAddress: ${fromAddress}, toAddress: ${toAddress}`)
+  console.log(`payload: ${payload}`);
+  console.log(`gasLimit: ${gasLimit}`)
+  console.log(`refundAddress: ${refundAddress}`)
+  console.log(`extra: ${extra}`);
 
   if (
     !fromChainId ||
@@ -131,12 +135,11 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
 });
 
 async function getEstimateFeeFunction(protocol: string) {
-  const logTitle = httpContext.get('logTitle');
   try {
     const buildEstimateFee = await import(`./${protocol}/estimateFee`)
     return buildEstimateFee.default();
   } catch (e) {
-    console.log(`${logTitle} - `, e);
+    console.log(e);
     throw new Error(`${protocol} - ${e.message}`);
   }
 }
@@ -152,7 +155,6 @@ async function estimateFee(
   refundAddress: string,
   extraParams: any
 ) {
-  const logTitle = httpContext.get('logTitle');
   try {
     const estimateFee = await getEstimateFeeFunction(protocol);
     return await estimateFee(
@@ -167,7 +169,7 @@ async function estimateFee(
     );
   } catch (e) {
     const err = ensureError(e);
-    console.error(`${logTitle} - `, err);
+    console.error(err);
     throw err;
   }
 }
@@ -210,8 +212,7 @@ function parseExtraParams(extra: string) {
       return []
     }
   } catch (e: any) {
-    const logTitle = httpContext.get('logTitle');
-    console.error(`${logTitle} - `, e.message);
+    console.error(e.message);
     return [];
   }
 }
