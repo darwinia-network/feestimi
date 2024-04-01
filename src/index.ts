@@ -84,6 +84,7 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
 
   httpContext.set('logTitle', `${protocol}:${fromChainId}>${toChainId}`)
 
+  console.log("NEW FEE ESTIMATING REQUEST")
   console.log(`==============================================================================================================`);
   console.log(`fromAddress: ${fromAddress}, toAddress: ${toAddress}`)
   console.log(`payload: ${payload}`);

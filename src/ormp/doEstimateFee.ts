@@ -15,7 +15,7 @@ async function doEstimateFee(params, config): Promise<[string, string]> {
   const refundAddress = params.refundAddress;
   let gasLimit = params.gasLimit;
 
-  console.log(`DO ESTIMATE GAS AT SOURCE BLOCK NUMBER: ${await blockNumber(fromChainId)} ...`)
+  console.log(`DO ESTIMATE FEE AT SOURCE BLOCK NUMBER: ${await blockNumber(fromChainId)} ...`)
 
   const portAddresses = config.portAddresses;
   const ormpAddresses = config.ormpAddresses;
@@ -50,24 +50,7 @@ async function doEstimateFee(params, config): Promise<[string, string]> {
   console.log(`fullPayload: ${fullPayload}`);
 
   // GAS ESTIMATION IF NOT PROVIDED
-  if (!gasLimit) {
-    console.log(`TARGET GASLIMIT NOT PROVIDED, ESTIMATING AT TARGET BLOCK NUMBER: ${await blockNumber(toChainId)} ...`)
-    gasLimit = await estimateGas(toChainId, tgtOrmpAddress, tgtPortAddress, fullPayload);
-    console.log(`- gasLimit: ${gasLimit}, fullPayload`)
-
-    const arb = isArb(toChainId);
-    const baseGas = arb ? (await fetchBaseGas(toChainId)) : 0;
-    console.log(`- baseGas: ${baseGas}${arb ? '(arb)' : ''}`)
-
-    let m = 1.2;
-    if (toChainId == 44) {
-      m = 1.5;
-      gasLimit = Math.round((baseGas + gasLimit) * m);
-    } else {
-      gasLimit = Math.round((baseGas + gasLimit) * m);
-    }
-    console.log(`- gasLimit total: ${gasLimit}, (gasLimit+baseGas)*${m}`)
-  }
+  gasLimit = gasLimit || await getGasLimitFromTargetChain(toChainId, tgtOrmpAddress, tgtPortAddress, fullPayload);
 
   // 1. BUILD PARAMS STR FOR UA TO CALL ORMP
   const paramsStr = buildParamsStr(gasLimit, refundAddress)
@@ -90,6 +73,28 @@ async function doEstimateFee(params, config): Promise<[string, string]> {
     Number(fee).toLocaleString('fullwide', { useGrouping: false }), 
     paramsStr
   ];
+}
+
+async function getGasLimitFromTargetChain(toChainId: number, tgtOrmpAddress: string, tgtPortAddress: string, fullPayload: string) {
+  var gasLimit = 0;
+
+  console.log(`TARGET GASLIMIT NOT PROVIDED, ESTIMATING AT TARGET BLOCK NUMBER: ${await blockNumber(toChainId)} ...`)
+  gasLimit = await estimateGas(toChainId, tgtOrmpAddress, tgtPortAddress, fullPayload);
+  console.log(`- gasLimit: ${gasLimit}, fullPayload`)
+
+  const arb = isArb(toChainId);
+  const baseGas = arb ? (await fetchBaseGas(toChainId)) : 0;
+  console.log(`- baseGas: ${baseGas}${arb ? '(arb)' : ''}`)
+
+  let m = 1.2;
+  if (toChainId == 44) { // Crab
+    m = 1.5;
+  } else if (toChainId == 46) { // Darwinia
+    m = 2;
+  }   
+  gasLimit = Math.round((baseGas + gasLimit) * m);
+  console.log(`- gasLimit total: ${gasLimit}, (gasLimit+baseGas)*${m}`)
+  return gasLimit;
 }
 
 function buildFullPayload(fromDappAddress: string, toDappAddress: string, payload: string, fromChainId: number, srcPortAddress: string) {
