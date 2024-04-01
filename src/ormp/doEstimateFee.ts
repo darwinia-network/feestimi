@@ -82,16 +82,19 @@ async function getGasLimitFromTargetChain(toChainId: number, tgtOrmpAddress: str
   gasLimit = await estimateGas(toChainId, tgtOrmpAddress, tgtPortAddress, fullPayload);
   console.log(`- gasLimit: ${gasLimit}, fullPayload`)
 
+  // Base Gas
   const arb = isArb(toChainId);
   const baseGas = arb ? (await fetchBaseGas(toChainId)) : 0;
   console.log(`- baseGas: ${baseGas}${arb ? '(arb)' : ''}`)
 
+  // Multiplier
   let m = 1.2;
   if (toChainId == 44) { // Crab
     m = 1.5;
-  } else if (toChainId == 46) { // Darwinia
+  } else if (toChainId == 46 || toChainId == 43) { // Darwinia || Pangolin
     m = 2;
   }   
+
   gasLimit = Math.round((baseGas + gasLimit) * m);
   console.log(`- gasLimit total: ${gasLimit}, (gasLimit+baseGas)*${m}`)
   return gasLimit;
