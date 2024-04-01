@@ -1,7 +1,24 @@
 import express, { Express, Request, Response } from "express";
+var httpContext = require('express-http-context');
 import { IEstimateFee } from "./interfaces/IEstimateFee";
 import { ensureError } from "./errors";
+
 require('dotenv').config({ silent: true })
+
+
+console.log = (function() {
+  var console_log = console.log;
+  
+  return function() {
+    var time = "[" + new Date().toUTCString() + "]";
+    var args = [];
+    args.push(time + ':');
+    for(var i = 0; i < arguments.length; i++) {
+      args.push(arguments[i]);
+    }
+    console_log.apply(console, args);
+  };
+})();
 
 ////////////////////////////////////////////
 // Server
@@ -16,6 +33,8 @@ app.use((_req, res, next) => {
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, API-Key')
   next()
 })
+
+app.use(httpContext.middleware);
 
 app.get("/", (_req: Request, res: Response) => {
   res.send("Hello, Darwinia");
@@ -54,13 +73,13 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
   const toAddress: string = req.query.to_address as string;
   const refundAddress: string = req.query.refund_address as string;
   const extra: string = req.query.extra as string; // extra=[[1, 10]]
-  console.log(`protocol: ${protocol}`);
-  console.log(`fromChain: ${fromChainId}, toChain: ${toChainId}`);
-  console.log(`fromAddress: ${fromAddress}, toAddress: ${toAddress}`)
-  console.log(`payload: ${payload}`);
-  console.log(`gasLimit: ${gasLimit}`)
-  console.log(`refundAddress: ${refundAddress}`)
-  console.log(`extra: ${extra}`);
+  const logTitle = `${protocol}:${fromChainId}>${toChainId}`
+  console.log(`${logTitle} - ==============================================================================================================`);
+  console.log(`${logTitle} - fromAddress: ${fromAddress}, toAddress: ${toAddress}`)
+  console.log(`${logTitle} - payload: ${payload}`);
+  console.log(`${logTitle} - gasLimit: ${gasLimit}`)
+  console.log(`${logTitle} - refundAddress: ${refundAddress}`)
+  console.log(`${logTitle} - extra: ${extra}`);
   if (
     !fromChainId ||
     !toChainId ||
@@ -88,7 +107,8 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
       fromAddress,
       toAddress,
       refundAddress,
-      extra
+      extra,
+      logTitle
     );
     const result = await estimateFee(
       protocol,
@@ -107,12 +127,12 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
   }
 });
 
-async function getEstimateFeeFunction(protocol: string) {
+async function getEstimateFeeFunction(protocol: string, title: string) {
   try {
     const buildEstimateFee = await import(`./${protocol}/estimateFee`)
     return buildEstimateFee.default();
   } catch (e) {
-    console.log(e);
+    console.log(`${title} - `, e);
     throw new Error(`${protocol} - ${e.message}`);
   }
 }
@@ -128,8 +148,9 @@ async function estimateFee(
   refundAddress: string,
   extraParams: any
 ) {
+  const title = `${protocol}:${fromChainId}>${toChainId}`
   try {
-    const estimateFee = await getEstimateFeeFunction(protocol);
+    const estimateFee = await getEstimateFeeFunction(protocol, title);
     return await estimateFee(
       fromChainId,
       toChainId,
@@ -142,7 +163,7 @@ async function estimateFee(
     );
   } catch (e) {
     const err = ensureError(e);
-    console.error(err);
+    console.error(`${title} - `, err);
     throw err;
   }
 }
@@ -154,13 +175,14 @@ function checkParams(
   fromAddress: string,
   toAddress: string,
   refundAddress: string,
-  extra: any
+  extra: any,
+  logTitle: string
 ) {
   try {
     const fromChainIdInt = parseInt(fromChainId);
     const toChainIdInt = parseInt(toChainId);
     const gasLimitInt = parseInt(gasLimit);
-    const extraParams = parseExtraParams(extra);
+    const extraParams = parseExtraParams(extra, logTitle);
 
     return {
       fromChainIdInt,
@@ -176,7 +198,7 @@ function checkParams(
   }
 }
 
-function parseExtraParams(extra: string) {
+function parseExtraParams(extra: string, logTitle: string) {
   try {
     if (extra) {
       const extraParams: any[] = JSON.parse(extra);
@@ -212,5 +234,5 @@ function errorWith(res: Response, code: number, error: Error | string) {
 }
 
 app.listen(port, host, () => {
-  console.log(`[Server]: I am running at https://${host}:${port}`);
+  console.log(`Server: I am running at https://${host}:${port}`);
 });

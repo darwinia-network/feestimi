@@ -15,16 +15,15 @@ class JSONRPCError extends Error {
   }
 }
 
-// get chain id from ethereum rpc api
-async function eth_chainId(rpcUrl: string) {
+async function _request(rpcUrl, method, params) {
   try {
     const response = await axios.post(
       rpcUrl,
       {
         jsonrpc: "2.0",
         id: +new Date(),
-        method: "eth_chainId",
-        params: [],
+        method: method,
+        params: params,
       },
       {
         headers: {
@@ -33,11 +32,10 @@ async function eth_chainId(rpcUrl: string) {
         },
       }
     );
-
     if (response.data.error) {
       throw new JSONRPCError(response.data.error.message);
     }
-    return Number(response.data.result);
+    return response.data.result;
   } catch (error: any) {
     if (error instanceof JSONRPCError) {
       throw error;
@@ -45,66 +43,23 @@ async function eth_chainId(rpcUrl: string) {
       throw new AxiosError(error.message);
     }
   }
+}
+
+// get chain id from ethereum rpc api
+async function eth_chainId(rpcUrl: string) {
+  return Number(await _request(rpcUrl, "eth_chainId", []));
 }
 
 async function eth_estimateGas(rpcUrl: string, tx: any) {
-  try {
-    const response = await axios.post(
-      rpcUrl,
-      {
-        jsonrpc: "2.0",
-        id: +new Date(),
-        method: "eth_estimateGas",
-        params: [tx],
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      }
-    );
-    if (response.data.error) {
-      throw new JSONRPCError(JSON.stringify(response.data));
-    }
-    return Number(response.data.result);
-  } catch (error: any) {
-    if (error instanceof JSONRPCError) {
-      throw error;
-    } else {
-      throw new AxiosError(error.message);
-    }
-  }
+  return Number(await _request(rpcUrl, "eth_estimateGas", [tx]));
+}
+
+async function eth_blockNumber(rpcUrl: string) {
+  return Number(await _request(rpcUrl, "eth_blockNumber", []));
 }
 
 async function eth_call(rpcUrl: string, params: any) {
-  try {
-    const response = await axios.post(
-      rpcUrl,
-      {
-        jsonrpc: "2.0",
-        id: +new Date(),
-        method: "eth_call",
-        params: [params, "latest"],
-      },
-      {
-        headers: {
-          "Content-Type": "application/json",
-          "Access-Control-Allow-Origin": "*",
-        },
-      }
-    );
-    if (response.data.error) {
-      throw new JSONRPCError(JSON.stringify(response.data));
-    }
-    return Number(response.data.result);
-  } catch (error: any) {
-    if (error instanceof JSONRPCError) {
-      throw error;
-    } else {
-      throw new AxiosError(error.message);
-    }
-  }
+  return await _request(rpcUrl, "eth_call", [params, "latest"]);
 }
 
-export { eth_chainId, eth_estimateGas, eth_call, AxiosError, JSONRPCError };
+export { eth_chainId, eth_estimateGas, eth_blockNumber, eth_call, AxiosError, JSONRPCError };
