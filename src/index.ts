@@ -73,13 +73,17 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
   const toAddress: string = req.query.to_address as string;
   const refundAddress: string = req.query.refund_address as string;
   const extra: string = req.query.extra as string; // extra=[[1, 10]]
+
   const logTitle = `${protocol}:${fromChainId}>${toChainId}`
+  httpContext.set('logTitle', logTitle)
+
   console.log(`${logTitle} - ==============================================================================================================`);
   console.log(`${logTitle} - fromAddress: ${fromAddress}, toAddress: ${toAddress}`)
   console.log(`${logTitle} - payload: ${payload}`);
   console.log(`${logTitle} - gasLimit: ${gasLimit}`)
   console.log(`${logTitle} - refundAddress: ${refundAddress}`)
   console.log(`${logTitle} - extra: ${extra}`);
+
   if (
     !fromChainId ||
     !toChainId ||
@@ -108,7 +112,6 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
       toAddress,
       refundAddress,
       extra,
-      logTitle
     );
     const result = await estimateFee(
       protocol,
@@ -127,12 +130,13 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
   }
 });
 
-async function getEstimateFeeFunction(protocol: string, title: string) {
+async function getEstimateFeeFunction(protocol: string) {
+  const logTitle = httpContext.get('logTitle');
   try {
     const buildEstimateFee = await import(`./${protocol}/estimateFee`)
     return buildEstimateFee.default();
   } catch (e) {
-    console.log(`${title} - `, e);
+    console.log(`${logTitle} - `, e);
     throw new Error(`${protocol} - ${e.message}`);
   }
 }
@@ -148,9 +152,9 @@ async function estimateFee(
   refundAddress: string,
   extraParams: any
 ) {
-  const title = `${protocol}:${fromChainId}>${toChainId}`
+  const logTitle = httpContext.get('logTitle');
   try {
-    const estimateFee = await getEstimateFeeFunction(protocol, title);
+    const estimateFee = await getEstimateFeeFunction(protocol);
     return await estimateFee(
       fromChainId,
       toChainId,
@@ -163,7 +167,7 @@ async function estimateFee(
     );
   } catch (e) {
     const err = ensureError(e);
-    console.error(`${title} - `, err);
+    console.error(`${logTitle} - `, err);
     throw err;
   }
 }
@@ -176,13 +180,12 @@ function checkParams(
   toAddress: string,
   refundAddress: string,
   extra: any,
-  logTitle: string
 ) {
   try {
     const fromChainIdInt = parseInt(fromChainId);
     const toChainIdInt = parseInt(toChainId);
     const gasLimitInt = parseInt(gasLimit);
-    const extraParams = parseExtraParams(extra, logTitle);
+    const extraParams = parseExtraParams(extra);
 
     return {
       fromChainIdInt,
@@ -198,7 +201,7 @@ function checkParams(
   }
 }
 
-function parseExtraParams(extra: string, logTitle: string) {
+function parseExtraParams(extra: string) {
   try {
     if (extra) {
       const extraParams: any[] = JSON.parse(extra);
@@ -207,7 +210,8 @@ function parseExtraParams(extra: string, logTitle: string) {
       return []
     }
   } catch (e: any) {
-    console.error(e.message);
+    const logTitle = httpContext.get('logTitle');
+    console.error(`${logTitle} - `, e.message);
     return [];
   }
 }
