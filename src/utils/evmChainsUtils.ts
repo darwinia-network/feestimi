@@ -8,9 +8,9 @@ const jsonRpcHttpUrls: { [key: number]: string } = {
   11155111: process.env.ETHEREUM_SEPOLIA_RPC,
   421614: process.env.ARBITRUM_SEPOLIA_RPC,
   42161: process.env.ARBITRUM_MAINNET_RPC,
-  43: "https://pangolin-rpc.darwinia.network",
-  44: "https://crab-rpc.darwinia.network",
-  46: "https://rpc.darwinia.network",
+  43: "http://g2.testnets.darwinia.network:9940",
+  44: "http://38.242.135.236:9944",
+  46: "http://c1.collator.itering.io:9944",
   2494104990: "https://api.shasta.trongrid.io/jsonrpc",
   728126428: "https://api.trongrid.io/jsonrpc",
   137: process.env.POLYGON_MAINNET_RPC,
@@ -83,6 +83,7 @@ const blockNumber = async (chainId: number): Promise<Number> => {
     throw new FeestimiError("json rpc url not found");
   }
 
+  console.log(`${chainId}: ${url}`);
   return await eth_blockNumber(url);
 }
 
