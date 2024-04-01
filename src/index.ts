@@ -1,5 +1,6 @@
 import express, { Express, Request, Response } from "express";
 var httpContext = require('express-http-context');
+const ruid = require('express-ruid');
 import { IEstimateFee } from "./interfaces/IEstimateFee";
 import { ensureError } from "./errors";
 
@@ -11,8 +12,9 @@ console.log = (function() {
   
   return function() {
     const logSubTitle = httpContext.get('logTitle');
-    if (logSubTitle) {
-      var title = "[" + new Date().toUTCString() + "] - [" + logSubTitle + "]";
+    const rid = httpContext.get('rid');
+    if (logSubTitle && rid) {
+      var title = "[" + new Date().toUTCString() + "] [" + logSubTitle + "] [" + rid + "]";
     } else {
       var title = "[" + new Date().toUTCString() + "]";
     }
@@ -40,6 +42,7 @@ app.use((_req, res, next) => {
 })
 
 app.use(httpContext.middleware);
+app.use(ruid({ setInContext: true }));
 
 app.get("/", (_req: Request, res: Response) => {
   res.send("Hello, Darwinia");
