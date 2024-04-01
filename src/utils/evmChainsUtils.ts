@@ -1,23 +1,23 @@
-import { eth_chainId, eth_estimateGas, eth_call } from "./evmJsonRpcClient";
+import { eth_chainId, eth_estimateGas, eth_blockNumber, eth_call } from "./evmJsonRpcClient";
 import { ethers } from "ethers";
 import { FeestimiError } from "../errors";
+import 'dotenv/config'
 
 const jsonRpcHttpUrls: { [key: number]: string } = {
-  1: "https://ethereum.publicnode.com",
-  11155111: "https://ethereum-sepolia.publicnode.com",
-  421614: "https://arbitrum-sepolia.blockpi.network/v1/rpc/public",
-  42161: "https://arbitrum-one.publicnode.com",
+  1: process.env.ETHEREUM_MAINNET_RPC,
+  11155111: process.env.ETHEREUM_SEPOLIA_RPC,
+  421614: process.env.ARBITRUM_SEPOLIA_RPC,
+  42161: process.env.ARBITRUM_MAINNET_RPC,
   43: "https://pangolin-rpc.darwinia.network",
   44: "https://crab-rpc.darwinia.network",
   46: "https://rpc.darwinia.network",
   2494104990: "https://api.shasta.trongrid.io/jsonrpc",
   728126428: "https://api.trongrid.io/jsonrpc",
-  137: "https://polygon-bor-rpc.publicnode.com",
-  81457: "https://rpc.blast.io"
+  137: process.env.POLYGON_MAINNET_RPC,
+  81457: process.env.BLAST_MAINNET_RPC
 };
 
 async function estimateGas(chainId: number, from: string, to: string, data: string) {
-  console.log("chainId - " + chainId)
   const url = jsonRpcHttpUrls[chainId];
   if (!url) {
     throw new FeestimiError("json rpc url not found");
@@ -31,7 +31,6 @@ async function estimateGas(chainId: number, from: string, to: string, data: stri
 }
 
 async function call(chainId: number, contract: string, data: string) {
-  console.log("chainId - " + chainId)
   const url = jsonRpcHttpUrls[chainId];
   if (!url) {
     throw new FeestimiError("json rpc url not found");
@@ -61,7 +60,6 @@ async function callFunction(chainId: number, contract: string, abi: string[], fu
 const getProvider = async (
   chainId: number
 ): Promise<ethers.providers.Provider> => {
-  console.log("chainId - " + chainId)
   const url = jsonRpcHttpUrls[chainId];
   if (!url) {
     throw new FeestimiError("json rpc url not found");
@@ -79,30 +77,40 @@ const getContract = async (
   return new ethers.Contract(address, abi, provider);
 };
 
+const blockNumber = async (chainId: number): Promise<Number> => {
+  const url = jsonRpcHttpUrls[chainId];
+  if (!url) {
+    throw new FeestimiError("json rpc url not found");
+  }
+
+  return await eth_blockNumber(url);
+}
+
 export {
+  blockNumber,
   getProvider,
   getContract,
   estimateGas,
   callFunction,
 };
 
-async function main() {
-  // way 1
-  const address = "0x" + ethers.utils.hexlify(
-      ethers.utils.base58.decode("TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")
-    ).slice(4, 44)
-  console.log(address);
-  const abi = ["function totalSupply() external view returns (uint256)"];
-  const provider = new ethers.providers.JsonRpcProvider("https://api.trongrid.io/jsonrpc");
-  const usdt = new ethers.Contract(address, abi, provider);
-  const totalSupply = await usdt.totalSupply();
-
-  // // way 2
-  // const totalSupply = await call(728126428, "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", "0x18160ddd")
-
-  // // way 3
-  // const totalSupply = await callFunction(728126428, "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", ["function totalSupply() external view returns (uint256)"], "totalSupply", [])
-
-  console.log("usdt total supply on tron: " + totalSupply);
-}
+// async function main() {
+//   // way 1
+//   const address = "0x" + ethers.utils.hexlify(
+//       ethers.utils.base58.decode("TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t")
+//     ).slice(4, 44)
+//   console.log(address);
+//   const abi = ["function totalSupply() external view returns (uint256)"];
+//   const provider = new ethers.providers.JsonRpcProvider("https://api.trongrid.io/jsonrpc");
+//   const usdt = new ethers.Contract(address, abi, provider);
+//   const totalSupply = await usdt.totalSupply();
+//
+//   // // way 2
+//   // const totalSupply = await call(728126428, "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", "0x18160ddd")
+//
+//   // // way 3
+//   // const totalSupply = await callFunction(728126428, "TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t", ["function totalSupply() external view returns (uint256)"], "totalSupply", [])
+//
+//   console.log("usdt total supply on tron: " + totalSupply);
+// }
 // main()

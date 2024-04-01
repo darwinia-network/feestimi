@@ -1,5 +1,5 @@
 import { ethers } from "ethers";
-import { getContract, estimateGas, callFunction } from "../utils/evmChainsUtils";
+import { blockNumber, getContract, estimateGas, callFunction } from "../utils/evmChainsUtils";
 import { FeestimiError } from "../errors";
 
 const srcOrmpLineAbi = [
@@ -18,23 +18,24 @@ async function doEstimateFee(params, config): Promise<[string, string]> {
   const portAddresses = config.portAddresses;
   const ormpAddresses = config.ormpAddresses;
 
+  const logTitle = `ormp:${fromChainId}>${toChainId}`
+
   // PARAMS PREPARATION
   const srcPortAddress = portAddresses[fromChainId]
-  console.log(srcPortAddress)
+  console.log(`${logTitle} - srcPortAddress: ${srcPortAddress}`);
   if (!srcPortAddress) {
     throw new FeestimiError(`srcPortAddress not found`, {
       context: { fromChainId },
     });
   }
-  console.log(`srcPortAddress: ${srcPortAddress}`);
 
   const tgtPortAddress = portAddresses[toChainId]
+  console.log(`${logTitle} - tgtPortAddress: ${tgtPortAddress}`);
   if (!tgtPortAddress) {
     throw new FeestimiError(`tgtPortAddress not found`, {
       context: { toChainId },
     });
   }
-  console.log(`tgtPortAddress: ${tgtPortAddress}`);
 
   const tgtOrmpAddress = ormpAddresses[toChainId];
   if (!tgtOrmpAddress) {
@@ -42,26 +43,31 @@ async function doEstimateFee(params, config): Promise<[string, string]> {
       context: { toChainId },
     });
   }
-  console.log(`tgtOrmpAddress: ${tgtOrmpAddress}`)
+  console.log(`${logTitle} - tgtOrmpAddress: ${tgtOrmpAddress}`);
 
   // BUILD FULL PAYLOAD
   const fullPayload = buildFullPayload(fromUAAddress, toUAAddress, payload, fromChainId, srcPortAddress)
-  console.log(`fullPayload: ${fullPayload}`);
+  console.log(`${logTitle} - fullPayload: ${fullPayload}`);
 
   // GAS ESTIMATION IF NOT PROVIDED
   if (!gasLimit) {
+    console.log(`${logTitle} - TARGET GASLIMIT NOT PROVIDED, ESTIMATING...`)
+    console.log(`${logTitle} - __blockNumber: ${await blockNumber(toChainId)}`)
     gasLimit = await estimateGas(toChainId, tgtOrmpAddress, tgtPortAddress, fullPayload);
-    console.log(`fullPayload gasLimit estimated: ${gasLimit}`)
+    console.log(`${logTitle} - __gasLimit: ${gasLimit} (fullPayload)`)
 
-    const baseGas = isArb(toChainId) ? (await fetchBaseGas(toChainId)) : 0;
-    console.log(`baseGas: ${baseGas}`)
+    const arb = isArb(toChainId);
+    const baseGas = arb ? (await fetchBaseGas(toChainId)) : 0;
+    console.log(`${logTitle} - __baseGas: ${baseGas}${arb ? '(arb)' : ''}`)
 
+    let m = 1.2;
     if (toChainId == 44) {
-      gasLimit = Math.round((baseGas + gasLimit) * 1.5);
+      m = 1.5;
+      gasLimit = Math.round((baseGas + gasLimit) * m);
     } else {
-      gasLimit = Math.round((baseGas + gasLimit) * 1.2);
+      gasLimit = Math.round((baseGas + gasLimit) * m);
     }
-    console.log(`fullPayload gasLimit estimated with buffer: ${gasLimit}`)
+    console.log(`${logTitle} - __gasLimit full: ${gasLimit} ( (gasLimit+baseGas)*${m} )`)
   }
 
   // 1. BUILD PARAMS STR FOR UA TO CALL ORMP
@@ -82,7 +88,7 @@ async function doEstimateFee(params, config): Promise<[string, string]> {
   );
 
   return [
-    fee.toLocaleString('fullwide', { useGrouping: false }), 
+    Number(fee).toLocaleString('fullwide', { useGrouping: false }), 
     paramsStr
   ];
 }
