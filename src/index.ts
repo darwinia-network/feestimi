@@ -82,36 +82,35 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
   const refundAddress: string = req.query.refund_address as string;
   const extra: string = req.query.extra as string; // extra=[[1, 10]]
 
-  httpContext.set('logTitle', `${protocol}:${fromChainId}>${toChainId}`)
-
-  console.log("")
-  console.log(`==============================================================================================================`);
-  console.log(`fromAddress: ${fromAddress}, toAddress: ${toAddress}`)
-  console.log(`payload: ${payload}`);
-  console.log(`gasLimit: ${gasLimit}`)
-  console.log(`refundAddress: ${refundAddress}`)
-  console.log(`extra: ${extra}`);
-
-  if (
-    !fromChainId ||
-    !toChainId ||
-    !payload ||
-    !fromAddress ||
-    !toAddress ||
-    !refundAddress
-  ) {
-    errorWith(
-      res,
-      1,
-      `'from_chain_id', 'to_chain_id', 'payload', 'from_address', 'to_address', 'refund_address' are required`
-    );
-    return;
-  }
-
   ////////////////////
   // Estimate Fee
   ////////////////////
   try {
+    httpContext.set('logTitle', `${protocol}:${fromChainId}>${toChainId}`)
+
+    console.log("")
+    console.log(`==============================================================================================================`);
+    console.log(`fromAddress: ${fromAddress}, toAddress: ${toAddress}`)
+    console.log(`payload: ${payload}`);
+    console.log(`gasLimit: ${gasLimit}`)
+    console.log(`refundAddress: ${refundAddress}`)
+    console.log(`extra: ${extra}`);
+
+    if (
+      !fromChainId ||
+        !toChainId ||
+        !payload ||
+        !fromAddress ||
+        !toAddress ||
+        !refundAddress
+    ) {
+      errorWith(
+        res,
+        1,
+        `'from_chain_id', 'to_chain_id', 'payload', 'from_address', 'to_address', 'refund_address' are required`
+      );
+      return;
+    }
     const params = checkParams(
       fromChainId,
       toChainId,
@@ -132,7 +131,7 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
       params.refundAddress,
       params.extraParams
     );
-    ok(res, { fee: result[0], params: result[1] });
+    ok(res, result);
   } catch (e: any) {
     errorWith(res, 1, e);
   }
