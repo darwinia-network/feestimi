@@ -1,12 +1,13 @@
 import { ethers } from "ethers";
 import { blockNumber, getContract, estimateGas, callFunction } from "../utils/evmChainsUtils";
 import { FeestimiError } from "../errors";
+import { Fee, Gas } from "../interfaces/IEstimateFee";
 
 const srcOrmpLineAbi = [
   "function fee(uint256 toChainId, address toDapp, bytes calldata message, bytes calldata params) external view returns (uint256)"
 ];
 
-async function doEstimateFee(params, config): Promise<[string, string]> {
+async function doEstimateFee(params, config): Promise<Fee> {
   const fromChainId = params.fromChainId;
   const toChainId = params.toChainId;
   const payload = params.payload;
@@ -50,10 +51,10 @@ async function doEstimateFee(params, config): Promise<[string, string]> {
   console.log(`fullPayload: ${fullPayload}`);
 
   // GAS ESTIMATION IF NOT PROVIDED
-  gasLimit = gasLimit || await getGasLimitFromTargetChain(toChainId, tgtOrmpAddress, tgtPortAddress, fullPayload);
+  const gas = await getGasLimitFromTargetChain(toChainId, tgtOrmpAddress, tgtPortAddress, fullPayload);
 
   // 1. BUILD PARAMS STR FOR UA TO CALL ORMP
-  const paramsStr = buildParamsStr(gasLimit, refundAddress)
+  const paramsStr = buildParamsStr(gasLimit || gas.total, refundAddress)
 
   // 2. FEE ESTIMATION
   const fee = await callFunction(
@@ -69,13 +70,14 @@ async function doEstimateFee(params, config): Promise<[string, string]> {
     ]
   );
 
-  return [
-    Number(fee).toLocaleString('fullwide', { useGrouping: false }), 
-    paramsStr
-  ];
+  return {
+    fee: Number(fee).toLocaleString('fullwide', { useGrouping: false }),
+    params: paramsStr,
+    gas: gas
+  }
 }
 
-async function getGasLimitFromTargetChain(toChainId: number, tgtOrmpAddress: string, tgtPortAddress: string, fullPayload: string) {
+async function getGasLimitFromTargetChain(toChainId: number, tgtOrmpAddress: string, tgtPortAddress: string, fullPayload: string): Promise<Gas> {
   var gasLimit = 0;
 
   console.log(`TARGET GASLIMIT NOT PROVIDED, ESTIMATING AT TARGET BLOCK NUMBER: ${await blockNumber(toChainId)} ...`)
@@ -95,9 +97,14 @@ async function getGasLimitFromTargetChain(toChainId: number, tgtOrmpAddress: str
     m = 2;
   }   
 
-  gasLimit = Math.round((baseGas + gasLimit) * m);
+  const gasLimitTotal = Math.round((baseGas + gasLimit) * m);
   console.log(`- gasLimit total: ${gasLimit}, (gasLimit+baseGas)*${m}`)
-  return gasLimit;
+  return {
+    gasForMessagingLayer: baseGas,
+    gasForMsgport: gasLimit,
+    multiplier: m,
+    total: gasLimitTotal
+  };
 }
 
 function buildFullPayload(fromDappAddress: string, toDappAddress: string, payload: string, fromChainId: number, srcPortAddress: string) {
