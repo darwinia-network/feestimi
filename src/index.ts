@@ -7,10 +7,10 @@ import { ensureError } from "./errors";
 require('dotenv').config({ silent: true })
 
 
-console.log = (function() {
+console.log = (function () {
   var console_log = console.log;
-  
-  return function() {
+
+  return function () {
     const logSubTitle = httpContext.get('logTitle');
     const rid = httpContext.get('rid');
     if (logSubTitle && rid) {
@@ -20,7 +20,7 @@ console.log = (function() {
     }
     var args = [];
     args.push(title + ':');
-    for(var i = 0; i < arguments.length; i++) {
+    for (var i = 0; i < arguments.length; i++) {
       args.push(arguments[i]);
     }
     console_log.apply(console, args);
@@ -98,11 +98,11 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
 
     if (
       !fromChainId ||
-        !toChainId ||
-        !payload ||
-        !fromAddress ||
-        !toAddress ||
-        !refundAddress
+      !toChainId ||
+      !payload ||
+      !fromAddress ||
+      !toAddress ||
+      !refundAddress
     ) {
       errorWith(
         res,
@@ -139,6 +139,20 @@ app.get("/:protocol/fee", async (req: Request, res: Response) => {
 
 async function getEstimateFeeFunction(protocol: string) {
   try {
+    // example1: ormp
+    // example2: multi[ormp,lz], which is a multi protocol, get the `multi` using regex
+    if (protocol.startsWith('multi')) {
+      // get the inner protocol list, ormp and lz
+      const innerProtocols = protocol.match(/\[(.*?)\]/)?.[1].split(',');
+      if (!innerProtocols) {
+        throw new Error(`Invalid protocol: ${protocol}`);
+      }
+      for (const innerProtocol of innerProtocols) {
+        const estimateFee = await getEstimateFeeFunction(innerProtocol);
+        return estimateFee;
+      }
+    }
+
     const buildEstimateFee = await import(`./${protocol}/estimateFee`)
     return buildEstimateFee.default();
   } catch (e) {
@@ -146,6 +160,7 @@ async function getEstimateFeeFunction(protocol: string) {
     throw new Error(`${protocol} - ${e.message}`);
   }
 }
+
 
 async function estimateFee(
   protocol: string,
@@ -159,6 +174,7 @@ async function estimateFee(
   extraParams: any
 ) {
   try {
+
     const estimateFee = await getEstimateFeeFunction(protocol);
     return await estimateFee(
       fromChainId,

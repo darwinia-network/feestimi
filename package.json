@@ -24,11 +24,13 @@
     "@axelar-network/axelarjs-sdk": "^0.13.6",
     "@layerzerolabs/lz-sdk": "^0.0.33",
     "@polkadot/api": "^9.13.6",
+    "@types/ramda": "^0.29.12",
     "axios": "^1.4.0",
     "dotenv": "^16.3.1",
     "ethers": "^5.7.0",
     "express": "^4.18.2",
     "express-http-context": "^1.2.4",
-    "express-ruid": "^1.1.5"
+    "express-ruid": "^1.1.5",
+    "ramda": "^0.29.1"
   }
 }
