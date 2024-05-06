@@ -8,7 +8,7 @@ const jsonRpcHttpUrls: { [key: number]: string } = {
   11155111: process.env.ETHEREUM_SEPOLIA_RPC,
   421614: process.env.ARBITRUM_SEPOLIA_RPC,
   42161: process.env.ARBITRUM_MAINNET_RPC,
-  43: "http://g2.testnets.darwinia.network:9940",
+  43: "http://g1.testnets.darwinia.network:9940",
   44: "http://c2.crab-rpc.itering.io:9944/",
   46: "http://c2.darwinia-rpc.itering.io:9944/",
   2494104990: "https://api.shasta.trongrid.io/jsonrpc",
