@@ -1,34 +1,24 @@
 {
-  "name": "darwinia-msgport-api",
+  "name": "darwinia-msgport-api2",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "main": "src/app.js",
+  "author": "Aki Wu",
+  "license": "MIT",
+  "private": false,
+  "type": "module",
   "scripts": {
-    "start:dev": "npx nodemon",
-    "build": "rimraf ./dist && tsc -b",
-    "start": "node dist/index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "devDependencies": {
-    "@types/express": "^4.17.17",
-    "@types/node": "^20.8.6",
-    "nodemon": "^3.0.1",
-    "rimraf": "^5.0.1",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
+    "start:dev": "nodemon src/app.js",
+    "start": "node src/app.js"
   },
   "dependencies": {
-    "@axelar-network/axelarjs-sdk": "^0.13.6",
-    "@layerzerolabs/lz-sdk": "^0.0.33",
-    "@polkadot/api": "^9.13.6",
-    "axios": "^1.4.0",
-    "dotenv": "^16.3.1",
+    "@vinejs/vine": "^2.0.0",
+    "dotenv": "^16.4.5",
     "ethers": "^5.7.0",
     "express": "^4.18.2",
     "express-http-context": "^1.2.4",
     "express-ruid": "^1.1.5"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
   }
 }

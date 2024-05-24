@@ -1,9 +1,1 @@
-node_modules
-build
-dist
-scripts/generate-axelar-chain-info.rb
-.env
-tsconfig.tsbuildinfo
-tsconfig.node.tsbuildinfo
-src/**/*.js
-src/**/*.d.ts
+/node_modules
