@@ -16,7 +16,8 @@ const jsonRpcHttpUrls = {
   728126428: "https://api.trongrid.io/jsonrpc",
   137: process.env.POLYGON_MAINNET_RPC,
   81457: process.env.BLAST_MAINNET_RPC,
-  167008: process.env.TAIKO_KATLA_RPC,
+  167009: "https://rpc.hekla.taiko.xyz",
+  1284: "https://moonbeam-rpc.dwellir.com",
 };
 
 const getProvider = async (chainId) => {
