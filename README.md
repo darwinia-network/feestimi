@@ -22,7 +22,7 @@ Host: g2.generic.darwinia.network:3378
   Host: g2.generic.darwinia.network:3378
   
   {
-    "fromChainId": 43,
+    "fromChainId": 701,
     "fromAddress": "0x65be094765731f394bc6d9df53bdf3376f1fc8b0",
     "toChainId": 2494104990,
     "toAddress": "0x65be094765731f394bc6d9df53bdf3376f1fc8b0",
@@ -41,7 +41,7 @@ Host: g2.generic.darwinia.network:3378
   Host: g2.generic.darwinia.network:3378
   
   {
-    "fromChainId": 43,
+    "fromChainId": 701,
     "fromAddress": "0x65be094765731f394bc6d9df53bdf3376f1fc8b0",
     "toChainId": 2494104990,
     "toAddress": "0x65be094765731f394bc6d9df53bdf3376f1fc8b0",
