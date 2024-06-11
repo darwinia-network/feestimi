@@ -8,7 +8,7 @@ const jsonRpcHttpUrls = {
   11155111: process.env.ETHEREUM_SEPOLIA_RPC,
   421614: process.env.ARBITRUM_SEPOLIA_RPC,
   42161: process.env.ARBITRUM_MAINNET_RPC,
-  43: "http://g2.testnets.darwinia.network:9940",
+  701: "https://koi-rpc.darwinia.network",
   44: "http://38.242.135.236:9944",
   45: "https://fraa-flashbox-2871-rpc.a.stagenet.tanssi.network",
   46: "http://c1.collator.itering.io:9944",
