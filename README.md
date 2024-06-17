@@ -5,7 +5,7 @@
 - Estimate fee of ormp
   
   ```
-  POST /fee HTTP/1.1
+  POST /v2/fee_with_options HTTP/1.1
   Content-Type: application/json
   Host: api.msgport.xyz
   
@@ -24,7 +24,7 @@
 - Estimate fee of multiport
   
   ```
-  POST /fee HTTP/1.1
+  POST /v2/fee_with_options HTTP/1.1
   Content-Type: application/json
   Host: api.msgport.xyz
   
