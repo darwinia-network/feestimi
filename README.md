@@ -7,7 +7,7 @@ https://apidog.msgport.xyz/
 - Estimate fee of ormp
   
   ```
-  GET /v2/fee_with_options HTTP/1.1
+  POST /v2/fee_with_options HTTP/1.1
   Content-Type: application/json
   Host: api.msgport.xyz
   
@@ -26,7 +26,7 @@ https://apidog.msgport.xyz/
 - Estimate fee of multiport
   
   ```
-  GET /v2/fee_with_options HTTP/1.1
+  POST /v2/fee_with_options HTTP/1.1
   Content-Type: application/json
   Host: api.msgport.xyz
   

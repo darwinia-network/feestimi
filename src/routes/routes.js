@@ -54,7 +54,7 @@ router.get("/ormp/fee", async (req, res) => {
   }
 });
 
-router.get("/v2/fee_with_options", async (req, res) => {
+router.post("/v2/fee_with_options", async (req, res) => {
   try {
     const { protocol, commonParams, protocolsParams } = await parseParams(req);
 
