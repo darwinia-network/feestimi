@@ -1,4 +1,4 @@
-# darwinia-msgport-api2
+# Msgport API
 
 ## Usage
 
