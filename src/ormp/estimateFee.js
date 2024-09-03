@@ -74,7 +74,11 @@ async function calcGasLimit(toChainId, fullPayload) {
   }
 
   // Total Gas Limit
-  const gasLimit = Math.ceil((messagingGas.add(msgportGas)) * multiplier);
+  let gasLimit = Math.ceil((messagingGas.add(msgportGas)) * multiplier);
+  console.log("isArb", isArb, gasLimit);
+  if (isArb) {
+    gasLimit = Math.min(gasLimit, 28000000);
+  }
   console.log(`- gasLimit: ${gasLimit}, (messagingGas+msgportGas)*${multiplier}`)
 
   return {
