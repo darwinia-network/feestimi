@@ -13,6 +13,7 @@ const ormpAddresses = {
   45: "0x13b2211a7cA45Db2808F6dB05557ce5347e3634e", // pangoro
   46: "0x13b2211a7cA45Db2808F6dB05557ce5347e3634e", // darwinia
   1284: "0x13b2211a7cA45Db2808F6dB05557ce5347e3634e", // moonbeam
+  2818: "0x13b2211a7cA45Db2808F6dB05557ce5347e3634e" // morph
 }
 
 export default ormpAddresses;
