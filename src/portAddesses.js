@@ -14,6 +14,7 @@ const portAddresses = {
     45: "0x2cd1867Fb8016f93710B6386f7f9F1D540A60812", // pangoro tanssi
     46: "0x2cd1867Fb8016f93710B6386f7f9F1D540A60812", // darwinia
     1284: "0x2cd1867Fb8016f93710B6386f7f9F1D540A60812", // moonbeam
+    2818: "0x2cd1867Fb8016f93710B6386f7f9F1D540A60812", // morph
   },
   lz: {
   }

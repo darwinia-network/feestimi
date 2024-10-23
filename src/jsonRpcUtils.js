@@ -18,6 +18,7 @@ const jsonRpcHttpUrls = {
   81457: process.env.BLAST_MAINNET_RPC,
   167009: "https://rpc.hekla.taiko.xyz",
   1284: "https://moonbeam-rpc.dwellir.com",
+  2818: "https://rpc.morphl2.io"
 };
 
 const getProvider = async (chainId) => {
